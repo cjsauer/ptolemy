@@ -134,20 +134,42 @@ export default defineComponent({
 .tool-card
   font-size: 0.85rem
 
-.roll-card, .oracle-card, .compact-card
-  background: rgba(67, 76, 94, 0.6)
+.roll-card
+  background: rgba(14, 17, 32, 0.8)
   border-left: 3px solid $primary
+  border: 1px solid rgba(200, 164, 92, 0.15)
+  border-left: 3px solid $primary
+  border-radius: 4px
+  padding: 8px 12px
+  box-shadow: 0 0 12px rgba(200, 164, 92, 0.06)
+
+.oracle-card
+  background: rgba(14, 17, 32, 0.8)
+  border-left: 3px solid $accent
+  border-radius: 4px
+  padding: 6px 10px
+
+.compact-card
+  background: rgba(14, 17, 32, 0.6)
+  border-left: 3px solid rgba(92, 184, 224, 0.4)
   border-radius: 4px
   padding: 6px 10px
 
 .roll-header
   display: flex
   align-items: center
+  font-family: Convergence
+  letter-spacing: 0.04em
 
 .roll-dice
   font-family: monospace
-  margin: 2px 0
+  margin: 4px 0
+  font-size: 0.95rem
+  letter-spacing: 0.02em
 
 .roll-result
-  font-size: 0.95rem
+  font-size: 1rem
+  font-family: Teko
+  letter-spacing: 0.06em
+  text-transform: uppercase
 </style>

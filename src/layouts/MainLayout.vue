@@ -607,7 +607,7 @@ export default defineComponent({
   color: $primary
 
 .about-text a:visited
-    color: $primary
+  color: $primary
 
 .journal-to-top
   position: fixed
@@ -619,6 +619,9 @@ export default defineComponent({
   padding: 0
   margin-left: 10px
   margin-right: 10px
-  text-shadow: 1px 1px 1px $dark
-  color: darkgrey
+  color: rgba(200, 164, 92, 0.3)
+
+// Header branding glow
+.q-toolbar-title
+  text-shadow: 0 0 20px rgba(200, 164, 92, 0.2)
 </style>

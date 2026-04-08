@@ -7,11 +7,9 @@ import { NewLegacyTrack, NewProgressTrack } from './tracks';
 
 export const NewCharacter = (): ICharacter => {
   return {
-    name: `${oracle.roll('Starforged/Oracles/Characters/Name/Given_Name')} ${oracle.roll(
-      'Starforged/Oracles/Characters/Name/Family_Name'
-    )}`,
+    name: '',
     pronouns: '',
-    callsign: oracle.roll('Starforged/Oracles/Characters/Name/Callsign'),
+    callsign: '',
     characteristics: '',
     location: '',
     stats: {
@@ -118,7 +116,7 @@ export const NewCampaign = (): ICampaign => {
 
   return {
     id: uuid(),
-    name: `New Campaign - ${character.name}`,
+    name: 'New Campaign',
     character: character,
     truths: {},
     progressTracks: [NewProgressTrack()],

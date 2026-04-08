@@ -47,11 +47,14 @@
 }
 .q-tab__label {
   font-family: Convergence;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 // declare a class which applies it
 .sf-header {
   font-family: 'Teko';
+  letter-spacing: 0.04em;
 }
 
 html {
@@ -60,6 +63,7 @@ html {
 
 body {
   height: 100%;
+  background: #0c0e18;
 }
 
 #q-app {
@@ -68,4 +72,115 @@ body {
 
 #q-app > div {
   height: 100%;
+}
+
+// --- Deep space atmosphere ---
+
+// Starfield background on the main page container
+.q-page-container {
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(100, 60, 180, 0.06) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(60, 120, 200, 0.05) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, rgba(200, 164, 92, 0.03) 0%, transparent 40%),
+    #0e1120;
+}
+
+// Subtle glow on focused inputs
+.q-field--outlined .q-field__control:focus-within {
+  box-shadow: 0 0 8px rgba(200, 164, 92, 0.15);
+}
+
+// Scrollbar styling
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(14, 17, 32, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(200, 164, 92, 0.25);
+  border-radius: 3px;
+
+  &:hover {
+    background: rgba(200, 164, 92, 0.4);
+  }
+}
+
+// --- Quasar component overrides ---
+
+// Header bar
+.q-header {
+  background: linear-gradient(180deg, #141828 0%, #1a1e2e 100%) !important;
+  border-bottom: 1px solid rgba(200, 164, 92, 0.15);
+}
+
+// Tabs
+.q-tab {
+  opacity: 0.6;
+  transition: opacity 0.2s, text-shadow 0.2s;
+
+  &--active {
+    opacity: 1;
+    text-shadow: 0 0 12px rgba(200, 164, 92, 0.4);
+  }
+}
+
+.q-tab-indicator {
+  background: $primary !important;
+  box-shadow: 0 0 8px rgba(200, 164, 92, 0.5);
+}
+
+// Drawers
+.q-drawer {
+  background: #111528 !important;
+  border-color: rgba(200, 164, 92, 0.1) !important;
+}
+
+// Cards
+.q-card {
+  background: #151929;
+  border: 1px solid rgba(200, 164, 92, 0.08);
+}
+
+// Separators
+.q-separator {
+  background: rgba(200, 164, 92, 0.1) !important;
+}
+
+// Buttons — subtle glow on hover
+.q-btn:not(.q-btn--flat):not(.q-btn--outline) {
+  transition: box-shadow 0.2s;
+  &:hover {
+    box-shadow: 0 0 12px rgba(200, 164, 92, 0.2);
+  }
+}
+
+// Expansion items
+.q-expansion-item__container {
+  border-bottom: 1px solid rgba(200, 164, 92, 0.06);
+}
+
+// Toggle / switch
+.q-toggle__inner--truthy {
+  .q-toggle__thumb {
+    box-shadow: 0 0 6px rgba(200, 164, 92, 0.5);
+  }
+}
+
+// List items — subtle hover glow
+.q-item {
+  transition: background 0.15s;
+  &:hover {
+    background: rgba(200, 164, 92, 0.04);
+  }
+}
+
+// Active list item
+.q-item--active {
+  color: $primary;
+  background: rgba(200, 164, 92, 0.08);
+  border-left: 2px solid $primary;
 }

@@ -242,17 +242,19 @@ export default defineComponent({
   flex: 1
 
 .input-bar
-  border-top: 1px solid $secondary
-  background: $dark
+  border-top: 1px solid rgba(200, 164, 92, 0.12)
+  background: rgba(12, 14, 24, 0.9)
 
 .streaming-body
-  background: rgba(59, 66, 82, 0.8)
+  background: rgba(20, 25, 42, 0.9)
+  border: 1px solid rgba(200, 164, 92, 0.08)
   border-radius: 12px 12px 12px 0
   padding: 8px 14px
 
 .cursor-blink
   animation: blink 0.8s step-end infinite
   color: $primary
+  text-shadow: 0 0 8px rgba(200, 164, 92, 0.6)
 
 @keyframes blink
   0%, 100%

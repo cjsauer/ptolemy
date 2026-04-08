@@ -506,14 +506,42 @@ export function lookupAsset(_campaign: ICampaign, assetId: string): { name: stri
   throw new Error(`Asset not found: "${assetId}"`);
 }
 
+// Map truth labels/names to the keys used in campaign.data.truths
+const TRUTH_KEY_MAP: Record<string, string> = {
+  'cataclysm': 'cataclysm',
+  'exodus': 'exodus',
+  'communities': 'communities',
+  'iron': 'iron',
+  'laws': 'laws',
+  'religion': 'religion',
+  'magic': 'magic',
+  'communication and data': 'communication',
+  'communication': 'communication',
+  'medicine': 'medicine',
+  'artificial intelligence': 'ai',
+  'ai': 'ai',
+  'war': 'war',
+  'lifeforms': 'lifeforms',
+  'precursors': 'precursors',
+  'horrors': 'horrors',
+};
+
+function normalizeTruthKey(key: string): string {
+  const lower = key.toLowerCase().trim();
+  return TRUTH_KEY_MAP[lower] || lower;
+}
+
 export function setTruths(
   campaign: ICampaign,
   truths: Record<string, string>
 ): { set: string[] } {
+  const setKeys: string[] = [];
   for (const [key, value] of Object.entries(truths)) {
-    campaign.truths[key] = value;
+    const normalizedKey = normalizeTruthKey(key);
+    campaign.truths[normalizedKey] = value;
+    setKeys.push(normalizedKey);
   }
-  return { set: Object.keys(truths) };
+  return { set: setKeys };
 }
 
 export function addAsset(

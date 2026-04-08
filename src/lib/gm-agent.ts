@@ -442,13 +442,13 @@ const TOOL_DEFINITIONS: Anthropic.Tool[] = [
   },
   {
     name: 'set_truths',
-    description: 'Set setting truths for the campaign world.',
+    description: 'Set setting truths for the campaign world. Valid truth categories: Cataclysm, Exodus, Communities, Iron, Laws, Religion, Magic, Communication and Data, Medicine, Artificial Intelligence, War, Lifeforms, Precursors, Horrors. Keys are normalized automatically.',
     input_schema: {
       type: 'object' as const,
       properties: {
         truths: {
           type: 'object',
-          description: 'Key-value pairs of truth categories and their selected text',
+          description: 'Key-value pairs of truth categories and their selected text. e.g. {"Cataclysm": "The Sun Plague..."}',
           additionalProperties: { type: 'string' },
         },
       },
