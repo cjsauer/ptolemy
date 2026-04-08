@@ -1,16 +1,5 @@
 <template>
   <router-view v-if="loaded" />
-  <div v-else>
-    <div
-      class="column q-pa-xl text-h5 self-center text-positive crt"
-      style="height: 100%; width: 100%"
-      v-on:click="skipIntro"
-    >
-      <div class="sf-header" v-for="(line, i) in msg" :key="i">
-        {{ line }}
-      </div>
-    </div>
-  </div>
 </template>
 <script lang="ts">
 import { defineComponent, watch, ref, onMounted } from 'vue';
@@ -26,40 +15,12 @@ import { sleep } from './lib/util';
 export default defineComponent({
   name: 'App',
   setup() {
-    let skipIntro = () => {
-      /* placeholder */
-    };
-    const skip = new Promise<void>((resolve) => (skipIntro = resolve));
-    const skippableSleep = (ms: number) => Promise.race([skip, sleep(ms)]);
-
     const loaded = ref(false);
-    const msg = ref(<string[]>['']);
-
-    const writeLine = async (text: string) => {
-      msg.value.push('');
-      for (let i = 0; i < text.length; i++) {
-        await skippableSleep(40);
-        msg.value[msg.value.length - 1] += text.charAt(i);
-      }
-    };
 
     const $q = useQuasar();
     $q.dark.set(true);
 
     const campaign = useCampaign();
-
-    const renderIntro = async () => {
-      await writeLine('::booting system...');
-      await skippableSleep(500);
-      await writeLine('::assessing damage...');
-      await skippableSleep(500);
-      await writeLine('::loading protocols...');
-      await skippableSleep(500);
-      // await writeLine('::synchronising...');
-      //await skippableSleep(500);
-      await writeLine('::welcome ' + campaign.data.character.name);
-      await sleep(500);
-    };
 
     const initialiseData = async () => {
       const assets = useAssets();
@@ -104,9 +65,7 @@ export default defineComponent({
     );
 
     return {
-      skipIntro,
       loaded,
-      msg,
     };
   },
 });

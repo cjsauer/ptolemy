@@ -109,7 +109,7 @@ export default defineComponent({
   name: 'ToolCard',
   props: {
     name: { type: String, required: true },
-    result: { type: Object as PropType<Record<string, any>>, required: true },
+    result: { type: Object as PropType<Record<string, unknown>>, required: true },
   },
   setup() {
     const resultColor = (result?: string) => {

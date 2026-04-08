@@ -1,4 +1,4 @@
-import { ICampaign, IProgressTrack, IClock, EAtO, INPC, IFaction, ERegion, ISGAsset, IPlanet, ISettlement, IStarship, IDerelict, ICreature, IStats, IRollData } from 'src/components/models';
+import { ICampaign, IProgressTrack, EAtO, INPC, IFaction, ERegion, ISGAsset, IPlanet, ISettlement, IStarship, IDerelict, ICreature, IStats, IRollData } from 'src/components/models';
 import { moveRoll } from 'src/lib/roll';
 import * as oracle from 'src/lib/oracles';
 import { Difficulty, NewProgressTrack, NewClock } from 'src/lib/tracks';

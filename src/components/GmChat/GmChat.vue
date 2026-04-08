@@ -78,7 +78,7 @@ import showdown from 'showdown';
 import { useCampaign } from 'src/store/campaign';
 import { useConfig } from 'src/store/config';
 import { IChatMessage, IChatToolCall } from 'src/components/models';
-import { runTurn, AgentEvent } from 'src/lib/gm-agent';
+import { runTurn } from 'src/lib/gm-agent';
 import ChatMessage from './ChatMessage.vue';
 import ToolCard from './ToolCard.vue';
 

@@ -1,7 +1,6 @@
 import { ICampaign, ICharacter, IJournalEntry, IFaction } from 'src/components/models';
 
 import { v4 as uuid } from 'uuid';
-import * as oracle from 'src/lib/oracles';
 import { NewSector } from './sector';
 import { NewLegacyTrack, NewProgressTrack } from './tracks';
 

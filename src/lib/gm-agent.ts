@@ -697,6 +697,21 @@ export async function* runTurn(
 
       const toolUses: { id: string; name: string; input: Record<string, unknown> }[] = [];
 
+      // Stream events as they arrive
+      for await (const event of stream) {
+        if (event.type === 'content_block_delta') {
+          if (event.delta.type === 'text_delta') {
+            yield { type: 'text_delta', text: event.delta.text };
+          }
+          // tool input JSON deltas are accumulated by the SDK automatically
+        } else if (event.type === 'content_block_start') {
+          if (event.content_block.type === 'tool_use') {
+            yield { type: 'tool_use_start', name: event.content_block.name, id: event.content_block.id };
+          }
+        }
+      }
+
+      // Get the final assembled message (tool inputs are now complete)
       const response = await stream.finalMessage();
 
       // Track usage
@@ -708,17 +723,14 @@ export async function* runTurn(
         totalUsage.cacheReadTokens += usage['cache_read_input_tokens'] || 0;
       }
 
-      // Process content blocks
+      // Collect completed tool_use blocks from the final message
       for (const block of response.content) {
-        if (block.type === 'text') {
-          yield { type: 'text_delta', text: block.text };
-        } else if (block.type === 'tool_use') {
+        if (block.type === 'tool_use') {
           toolUses.push({
             id: block.id,
             name: block.name,
             input: block.input as Record<string, unknown>,
           });
-          yield { type: 'tool_use_start', name: block.name, id: block.id };
         }
       }
 

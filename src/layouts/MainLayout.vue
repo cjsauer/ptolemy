@@ -436,7 +436,7 @@
 </template>
 
 <script lang="ts">
-import { ref, reactive, defineComponent, computed } from 'vue';
+import { ref, defineComponent, computed } from 'vue';
 
 import { useCampaign } from 'src/store/campaign';
 import { useConfig } from 'src/store/config';
@@ -525,7 +525,6 @@ export default defineComponent({
           max_tokens: 32,
           messages: [{ role: 'user', content: 'Reply with exactly: "Connection successful."' }],
         });
-        const text = response.content[0]?.type === 'text' ? response.content[0].text : '';
         apiTestResult.value = { success: true, message: `Connected! Model: ${response.model}` };
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Unknown error';
