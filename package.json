@@ -11,6 +11,7 @@
     "test": "echo \"No test specified\" && exit 0"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.85.0",
     "@quasar/extras": "^1.14.3",
     "@svgdotjs/svg.js": "^3.1.1",
     "core-js": "^3.19.0",

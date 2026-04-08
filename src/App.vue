@@ -71,7 +71,7 @@ export default defineComponent({
     };
 
     onMounted(async () => {
-      await Promise.all([initialiseData(), renderIntro()]);
+      await initialiseData();
       loaded.value = true;
     });
 

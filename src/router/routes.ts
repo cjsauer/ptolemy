@@ -26,6 +26,12 @@ const routes: RouteRecordRaw[] = [
   },
 
   {
+    path: '/play',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [{ path: '', component: () => import('src/pages/Play.vue') }],
+  },
+
+  {
     path: '/challenges',
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/Challenges.vue') }],

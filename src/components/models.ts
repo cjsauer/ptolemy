@@ -66,6 +66,8 @@ export interface IConfig {
   edit: boolean;
   saving: boolean;
   journalTab?: boolean;
+  claudeApiKey?: string;
+  claudeModel?: string;
   map: {
     height: number;
     width: number;
@@ -315,6 +317,19 @@ export interface IFaction {
 }
 
 // Campaign
+export interface IChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  toolCalls?: IChatToolCall[];
+  timestamp: number;
+}
+
+export interface IChatToolCall {
+  name: string;
+  input: Record<string, unknown>;
+  result: Record<string, unknown> | string;
+}
+
 export interface ICampaign {
   id: string;
   name: string;
@@ -324,6 +339,7 @@ export interface ICampaign {
   truths: ITruths;
   sectors: ISector[];
   factions: IFaction[];
+  gmChat?: IChatMessage[];
 }
 
 // NPCs

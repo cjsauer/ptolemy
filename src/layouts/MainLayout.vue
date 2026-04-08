@@ -21,6 +21,7 @@
       </q-toolbar>
 
       <q-tabs align="center" dense :class="{ crt: crt }">
+        <q-route-tab to="/play" label="Play" />
         <q-route-tab to="/campaign" label="Campaign" />
         <q-route-tab v-if="config.data.journalTab" to="/journal" label="Journal" />
         <q-route-tab to="/" :label="campaign.data.character.name" />
@@ -143,6 +144,18 @@
         <q-item>
           <q-item-section avatar>
             <q-toggle v-model="config.data.journalTab" label="Use Journal Tab" />
+          </q-item-section>
+        </q-item>
+
+        <q-separator size="lg" />
+
+        <q-item clickable v-ripple @click="showSettings = true">
+          <q-item-section avatar>
+            <q-icon name="settings" />
+          </q-item-section>
+          <q-item-section>
+            Claude GM Settings
+            <q-tooltip>Configure Claude API key and model</q-tooltip>
           </q-item-section>
         </q-item>
 
@@ -361,17 +374,75 @@
       </q-card>
     </q-dialog>
 
+    <q-dialog v-model="showSettings" :maximized="$q.platform.is.mobile">
+      <q-card class="card-bg" style="min-width: 400px">
+        <q-card-section class="row bg-secondary text-h5 justify-between">
+          <div class="col-grow sf-header">Claude GM Settings</div>
+          <q-btn class="col-shrink" flat dense icon="close" @click="showSettings = false" />
+        </q-card-section>
+
+        <q-card-section>
+          <q-input
+            v-model="config.data.claudeApiKey"
+            label="Anthropic API Key"
+            type="password"
+            standout="bg-blue-grey text-white"
+            :input-style="{ color: '#ECEFF4' }"
+            hint="Your API key is stored locally in your browser and never sent to any server except Anthropic's API."
+          >
+            <template v-slot:prepend>
+              <q-icon name="key" />
+            </template>
+          </q-input>
+        </q-card-section>
+
+        <q-card-section>
+          <q-select
+            v-model="config.data.claudeModel"
+            :options="modelOptions"
+            label="Model"
+            standout="bg-blue-grey text-white"
+            :input-style="{ color: '#ECEFF4' }"
+            emit-value
+            map-options
+          >
+            <template v-slot:prepend>
+              <q-icon name="smart_toy" />
+            </template>
+          </q-select>
+        </q-card-section>
+
+        <q-card-actions align="center" class="q-pb-md">
+          <q-btn
+            label="Test Connection"
+            color="primary"
+            flat
+            :loading="testingApi"
+            :disable="!config.data.claudeApiKey"
+            @click="testApiKey"
+          />
+        </q-card-actions>
+
+        <q-card-section v-if="apiTestResult" class="q-pt-none">
+          <q-banner :class="apiTestResult.success ? 'bg-positive' : 'bg-negative'" class="text-white" rounded>
+            {{ apiTestResult.message }}
+          </q-banner>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
+
     <roller v-model="showRoller" :btnSize="btnSize" />
   </q-layout>
 </template>
 
 <script lang="ts">
-import { ref, defineComponent, computed } from 'vue';
+import { ref, reactive, defineComponent, computed } from 'vue';
 
 import { useCampaign } from 'src/store/campaign';
 import { useConfig } from 'src/store/config';
 import { useAssets } from 'src/store/assets';
 import { useQuasar, scroll } from 'quasar';
+import Anthropic from '@anthropic-ai/sdk';
 
 import Oracles from 'src/components/Oracles/Oracles.vue';
 import Moves from 'src/components/Moves/Moves.vue';
@@ -432,6 +503,37 @@ export default defineComponent({
 
     const showRoller = ref(false);
     const showAbout = ref(false);
+    const showSettings = ref(false);
+    const testingApi = ref(false);
+    const apiTestResult = ref<{ success: boolean; message: string } | null>(null);
+    const modelOptions = [
+      { label: 'Claude Opus 4.6 (1M context)', value: 'claude-opus-4-6' },
+      { label: 'Claude Sonnet 4.6', value: 'claude-sonnet-4-6' },
+      { label: 'Claude Haiku 4.5', value: 'claude-haiku-4-5-20251001' },
+    ];
+
+    const testApiKey = async () => {
+      testingApi.value = true;
+      apiTestResult.value = null;
+      try {
+        const client = new Anthropic({
+          apiKey: config.data.claudeApiKey,
+          dangerouslyAllowBrowser: true,
+        });
+        const response = await client.messages.create({
+          model: config.data.claudeModel || 'claude-opus-4-6',
+          max_tokens: 32,
+          messages: [{ role: 'user', content: 'Reply with exactly: "Connection successful."' }],
+        });
+        const text = response.content[0]?.type === 'text' ? response.content[0].text : '';
+        apiTestResult.value = { success: true, message: `Connected! Model: ${response.model}` };
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        apiTestResult.value = { success: false, message: `Connection failed: ${message}` };
+      } finally {
+        testingApi.value = false;
+      }
+    };
     const crt = computed((): boolean => {
       return /bebop/i.test(campaign.data.sectors[config.data.sector].name);
     });
@@ -484,6 +586,11 @@ export default defineComponent({
 
       showRoller,
       showAbout,
+      showSettings,
+      testingApi,
+      apiTestResult,
+      modelOptions,
+      testApiKey,
       btnSize,
       crt,
       scrollTo,
