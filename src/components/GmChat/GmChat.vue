@@ -97,12 +97,17 @@
     <!-- Rewind confirm -->
     <q-dialog v-model="showRewindConfirm">
       <q-card class="card-bg" style="min-width: 320px">
-        <q-card-section class="bg-secondary sf-header text-h6">Rewind Chat</q-card-section>
+        <q-card-section class="bg-secondary sf-header text-h6">Rewind</q-card-section>
         <q-card-section>
-          This will delete {{ messages.length - rewindTarget }} message(s) from this point forward. This cannot be undone.
-          <div class="text-warning text-caption q-mt-sm">
-            Warning: This only removes chat messages. It will NOT undo any changes the GM made to your character, vows, clocks, sector, or other game state.
-          </div>
+          <template v-if="rewindSnapshotId">
+            This will restore all game state (character, sector, vows, chat) to the snapshot taken before this message. {{ messages.length - rewindTarget }} message(s) and all state changes will be reverted.
+          </template>
+          <template v-else>
+            No snapshot is available for this message (it predates the snapshot system). This will only remove {{ messages.length - rewindTarget }} message(s) without reverting game state.
+            <div class="text-warning text-caption q-mt-sm">
+              Character, vows, clocks, and sector changes will NOT be undone.
+            </div>
+          </template>
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat label="Cancel" @click="showRewindConfirm = false" />
@@ -197,6 +202,7 @@ import { useConfig } from 'src/store/config';
 import { useChat } from 'src/store/chat';
 import { IChatMessage } from 'src/components/models';
 import { runTurn, buildPrompt } from 'src/lib/gm-agent';
+import { createSnapshot, restoreSnapshot } from 'src/lib/snapshots';
 import ChatMessage from './ChatMessage.vue';
 import ToolCard from './ToolCard.vue';
 
@@ -262,15 +268,41 @@ export default defineComponent({
     });
 
     const rewindTarget = ref(-1);
+    const rewindSnapshotId = ref<number | null>(null);
     const showRewindConfirm = ref(false);
     const rewindTo = (index: number) => {
       rewindTarget.value = index;
+      // Walk backwards from this message to find the nearest snapshot
+      const chat = campaign.data.gmChat || [];
+      rewindSnapshotId.value = null;
+      for (let i = index; i >= 0; i--) {
+        if (chat[i].snapshotId) {
+          rewindSnapshotId.value = chat[i].snapshotId as number;
+          break;
+        }
+      }
       showRewindConfirm.value = true;
     };
-    const confirmRewind = () => {
-      if (!campaign.data.gmChat) return;
-      campaign.data.gmChat.splice(rewindTarget.value);
+    const confirmRewind = async () => {
+      // Grab the message text before we restore
+      const rewoundText = (campaign.data.gmChat || [])[rewindTarget.value]?.content || '';
+
+      if (rewindSnapshotId.value) {
+        // Full state restore from snapshot
+        const restored = await restoreSnapshot(rewindSnapshotId.value);
+        if (restored) {
+          campaign.data = restored;
+          await campaign.save();
+        }
+      } else {
+        // No snapshot available, fall back to chat truncation only
+        if (!campaign.data.gmChat) return;
+        campaign.data.gmChat.splice(rewindTarget.value);
+      }
       showRewindConfirm.value = false;
+
+      // Pre-fill the input with the rewound message
+      input.value = rewoundText;
     };
 
     const stop = () => {
@@ -317,11 +349,15 @@ export default defineComponent({
         campaign.data.gmChat = [];
       }
 
-      // Add user message
+      // Snapshot before GM turn
+      const snapshotId = await createSnapshot(campaign.data, `Before: ${text.substring(0, 50)}`);
+
+      // Add user message with snapshot reference
       const userMsg: IChatMessage = {
         role: 'user',
         content: text,
         timestamp: Date.now(),
+        snapshotId,
       };
       campaign.data.gmChat.push(userMsg);
       input.value = '';
@@ -412,6 +448,7 @@ export default defineComponent({
       rewindTarget,
       showRewindConfirm,
       confirmRewind,
+      rewindSnapshotId,
       send,
       showDebug,
       debugTab,

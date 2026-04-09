@@ -3,6 +3,7 @@
     <div class="message-label text-caption text-grey row items-center no-wrap">
       <span>{{ msg.role === 'user' ? 'You' : 'GM' }}</span>
       <q-btn
+        v-if="msg.role === 'user'"
         flat
         dense
         round
@@ -12,7 +13,7 @@
         class="rewind-btn q-ml-xs"
         @click="$emit('rewind')"
       >
-        <q-tooltip>Rewind to here (delete everything after this message)</q-tooltip>
+        <q-tooltip>Rewind and try again</q-tooltip>
       </q-btn>
     </div>
     <div class="message-body">

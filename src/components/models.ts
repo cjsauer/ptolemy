@@ -322,6 +322,7 @@ export interface IChatMessage {
   content: string;
   toolCalls?: IChatToolCall[];
   timestamp: number;
+  snapshotId?: number;
 }
 
 export interface IChatToolCall {
