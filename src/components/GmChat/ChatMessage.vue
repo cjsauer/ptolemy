@@ -1,7 +1,19 @@
 <template>
   <div class="chat-message q-my-sm" :class="msg.role">
-    <div class="message-label text-caption text-grey">
-      {{ msg.role === 'user' ? 'You' : 'GM' }}
+    <div class="message-label text-caption text-grey row items-center no-wrap">
+      <span>{{ msg.role === 'user' ? 'You' : 'GM' }}</span>
+      <q-btn
+        flat
+        dense
+        round
+        icon="mdi-arrow-collapse-left"
+        size="xs"
+        color="grey-7"
+        class="rewind-btn q-ml-xs"
+        @click="$emit('rewind')"
+      >
+        <q-tooltip>Rewind to here (delete everything after this message)</q-tooltip>
+      </q-btn>
     </div>
     <div class="message-body">
       <div v-if="msg.role === 'user'" class="user-text">{{ msg.content }}</div>
@@ -18,13 +30,13 @@
 
 <script lang="ts">
 import { defineComponent, computed, PropType } from 'vue';
-import showdown from 'showdown';
+import { marked } from 'marked';
 import { IChatMessage } from 'src/components/models';
 import ToolCard from './ToolCard.vue';
 
-const converter = new showdown.Converter({
-  simpleLineBreaks: true,
-  openLinksInNewWindow: true,
+marked.setOptions({
+  breaks: true,
+  gfm: true,
 });
 
 export default defineComponent({
@@ -33,10 +45,11 @@ export default defineComponent({
   props: {
     msg: { type: Object as PropType<IChatMessage>, required: true },
   },
+  emits: ['rewind'],
   setup(props) {
     const rendered = computed(() => {
       if (typeof props.msg.content !== 'string') return '';
-      return converter.makeHtml(props.msg.content);
+      return marked.parse(props.msg.content) as string;
     });
     return { rendered };
   },
@@ -74,53 +87,12 @@ export default defineComponent({
 .user-text
   white-space: pre-wrap
 
-.gm-text
-  :deep(p)
-    margin: 4px 0
-  :deep(strong)
-    color: $primary
-  :deep(em)
-    color: rgba(255, 255, 255, 0.7)
-  :deep(a)
-    color: $info
-    text-decoration: none
-    border-bottom: 1px solid rgba(92, 184, 224, 0.3)
-    &:hover
-      color: lighten($info, 10%)
-  :deep(h1)
-    font-family: Teko
-    font-size: 1.4rem
-    font-weight: normal
-    letter-spacing: 0.04em
-    margin: 12px 0 4px
-    color: $primary
-  :deep(h2)
-    font-family: Teko
-    font-size: 1.25rem
-    font-weight: normal
-    letter-spacing: 0.04em
-    margin: 10px 0 4px
-    color: $primary
-  :deep(h3)
-    font-family: Teko
-    font-size: 1.1rem
-    font-weight: normal
-    letter-spacing: 0.04em
-    margin: 8px 0 4px
-    color: $primary
-  :deep(h4), :deep(h5), :deep(h6)
-    font-size: 1rem
-    font-weight: bold
-    margin: 6px 0 4px
-    color: rgba(200, 164, 92, 0.8)
-  :deep(ul), :deep(ol)
-    padding-left: 20px
-    margin: 4px 0
-  :deep(li)
-    margin: 2px 0
-  :deep(code)
-    background: rgba(200, 164, 92, 0.08)
-    padding: 1px 4px
-    border-radius: 3px
-    font-size: 0.9em
+.rewind-btn
+  opacity: 0
+  transition: opacity 0.15s
+
+.chat-message:hover .rewind-btn
+  opacity: 1
+
+// .gm-text styles are global in app.scss
 </style>

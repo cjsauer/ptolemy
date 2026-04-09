@@ -32,7 +32,7 @@
         <div v-if="item.marked">
           <div class="row q-mb-sm no-wrap items-center q-pr-sm">
             <q-separator vertical />
-            <div class="col q-mx-sm text-justify asset-text" v-html="item.text" />
+            <div class="col q-mx-sm text-justify asset-text" v-html="mdToHtml(item.text)" />
           </div>
           <q-input
             class="q-mb-sm"
@@ -61,6 +61,7 @@ import { ISGAsset } from '../models';
 import { useConfig } from 'src/store/config';
 
 import { icon } from 'src/lib/icons';
+import { mdToHtml } from 'src/lib/util';
 
 import ResourceTrack from '../Tracks/ResourceTrack.vue';
 import Hexbox from '../Widgets/Hexbox.vue';
@@ -107,6 +108,7 @@ export default defineComponent({
       icon,
       config,
       dots,
+      mdToHtml,
     };
   },
 });

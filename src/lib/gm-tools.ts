@@ -1,4 +1,4 @@
-import { ICampaign, IProgressTrack, EAtO, INPC, IFaction, ERegion, ISGAsset, IPlanet, ISettlement, IStarship, IDerelict, ICreature, IStats, IRollData } from 'src/components/models';
+import { ICampaign, IProgressTrack, EAtO, INPC, IFaction, ERegion, ISGAsset, IPlanet, ISettlement, IStarship, IDerelict, ICreature, IStats, IRollData, ECellStatus } from 'src/components/models';
 import { moveRoll } from 'src/lib/roll';
 import * as oracle from 'src/lib/oracles';
 import { Difficulty, NewProgressTrack, NewClock } from 'src/lib/tracks';
@@ -22,12 +22,13 @@ function progressScore(track: IProgressTrack): number {
   return track.boxes.filter((b) => b >= 4).length;
 }
 
-// Helper: ensure sector cell exists
+// Helper: ensure sector cell exists and is marked as a location
 function ensureCell(campaign: ICampaign, sectorIndex: number, cellId: string) {
   if (!campaign.sectors[sectorIndex]) throw new Error(`Sector ${sectorIndex} does not exist`);
   if (!campaign.sectors[sectorIndex].cells[cellId]) {
     campaign.sectors[sectorIndex].cells[cellId] = NewCell(cellId);
   }
+  campaign.sectors[sectorIndex].cells[cellId].stat = ECellStatus.Location;
 }
 
 // Helper: apply non-undefined fields from source onto target
@@ -73,11 +74,69 @@ export function getGameState(campaign: ICampaign) {
     abilities: a.items.map((item, i) => ({ index: i, text: item.text.substring(0, 80), enabled: item.marked })),
   }));
 
+  const legacies = {
+    quests: campaign.character.legacies.quests.boxes.reduce((sum, b) => sum + b.ticks, 0),
+    bonds: campaign.character.legacies.bonds.boxes.reduce((sum, b) => sum + b.ticks, 0),
+    discoveries: campaign.character.legacies.discoveries.boxes.reduce((sum, b) => sum + b.ticks, 0),
+  };
+
+  const sectors = campaign.sectors.map((sector, i) => {
+    const cells = Object.values(sector.cells);
+    const settlements = cells.flatMap((c) => c.settlements.map((s) => ({
+      name: s.name, location: s.location, population: s.population,
+      authority: s.authority, firstLook: s.firstLook || undefined,
+      trouble: s.trouble || undefined, projects: s.projects || undefined,
+      notes: s.notes || undefined,
+    }))).filter((s) => s.name);
+    const npcs = cells.flatMap((c) => c.npcs.map((n) => ({
+      name: n.name, role: n.role, disposition: n.disposition || undefined,
+      goal: n.goal || undefined, bond: n.bond, connection: n.connection,
+      notes: n.notes || undefined,
+    }))).filter((n) => n.name);
+    const planets = cells.flatMap((c) => c.planets.map((p) => ({
+      name: p.name, type: p.type, atmosphere: p.atmosphere || undefined,
+      life: p.life || undefined, description: p.description || undefined,
+      notes: p.notes || undefined,
+    }))).filter((p) => p.name);
+    const ships = cells.flatMap((c) => c.ships.map((s) => ({
+      name: s.name, class: s.class || undefined, mission: s.mission || undefined,
+      notes: s.notes || undefined,
+    }))).filter((s) => s.name);
+    const derelicts = cells.flatMap((c) => c.derelicts.map((d) => ({
+      name: d.name, type: d.type, condition: d.condition || undefined,
+      notes: d.notes || undefined,
+    }))).filter((d) => d.name);
+    const creatures = cells.flatMap((c) => c.creatures.map((cr) => ({
+      name: cr.name, environment: cr.environment || undefined,
+      scale: cr.scale || undefined, behaviour: cr.behaviour || undefined,
+      notes: cr.notes || undefined,
+    }))).filter((cr) => cr.name);
+
+    return {
+      index: i,
+      name: sector.name,
+      region: sector.region,
+      notes: sector.notes || undefined,
+      settlements,
+      npcs,
+      planets,
+      ships: ships.length > 0 ? ships : undefined,
+      derelicts: derelicts.length > 0 ? derelicts : undefined,
+      creatures: creatures.length > 0 ? creatures : undefined,
+    };
+  });
+
+  const factions = campaign.factions
+    .filter((f) => f.name)
+    .map((f) => ({ name: f.name, type: f.type, influence: f.influence }));
+
   return {
+    campaignName: campaign.name,
     character: {
       name: char.name,
       pronouns: char.pronouns,
       callsign: char.callsign,
+      characteristics: char.characteristics,
       location: char.location,
       gear: char.gear,
       stats: { ...char.stats },
@@ -87,14 +146,16 @@ export function getGameState(campaign: ICampaign) {
       momentum: char.tracks.momentum.value,
       momentumMax: char.tracks.momentum.max,
       momentumReset: char.tracks.momentum.reset,
+      legacies,
       impacts,
       assets,
     },
     vows: activeVows,
     progressTracks: activeTracks,
     clocks: activeClocks,
-    sectorCount: campaign.sectors.length,
-    factionCount: campaign.factions.length,
+    truths: Object.keys(campaign.truths).length > 0 ? campaign.truths : undefined,
+    sectors,
+    factions: factions.length > 0 ? factions : undefined,
   };
 }
 
@@ -605,4 +666,170 @@ export function burnMomentum(campaign: ICampaign): { newMomentum: number; reset:
   const mom = campaign.character.tracks.momentum;
   mom.value = mom.reset;
   return { newMomentum: mom.value, reset: mom.reset };
+}
+
+export function getCampaignSetupGuide(): { guide: string } {
+  return { guide: `CAMPAIGN SETUP PROCEDURE (adapted from Starforged Chapter 2)
+
+This should feel like a conversation, not a form. Go through each step at a natural pace — don't rush. Let the player make choices and ask questions. The existing UI (Character tab, Sector tab, Challenges tab) updates in real time as you populate data via tools.
+
+Prep is play. Everything the player does here — choosing truths, envisioning locations, naming their ship — IS the game. Don't rush toward "real" gameplay.
+
+=======================================
+STEP 1: CHOOSE YOUR TRUTHS
+=======================================
+Present 14 truth categories one at a time. For each, offer the 3 options from the rulebook or a custom option. The player picks, or you roll. Write results via set_truths tool.
+
+Categories (in order): Cataclysm, Exodus, Communities, Iron, Laws, Religion, Magic, Communication and Data, Medicine, Artificial Intelligence, War, Lifeforms, Precursors, Horrors.
+
+Each truth has 3 options (roughly mapped to dice ranges 1-33, 34-67, 68-100). Present the BOLDED summary of each option. If the player wants details, elaborate. Some truths have subtables — offer those too.
+
+Tips:
+- Keep it moving. Read bold summaries first, details on request.
+- Each truth includes character prompts (marked with ▲) and suggested assets. Mention these — they'll help character creation later.
+- Leave unanswered questions. These become adventure fuel.
+- It's fine to skip categories the player doesn't care about.
+- Note any quest starters that excite the player — these can seed the adventure.
+
+IMPORTANT: The player may want to customize the setting significantly (e.g., Star Wars, Firefly, etc.). That's great! Adapt the truths to fit their vision. The truths are a starting point, not a constraint.
+
+=======================================
+STEP 2: BUILD A STARTING SECTOR
+=======================================
+Environment before character — let the player see the world before deciding who they are in it.
+
+Step 2a: Choose Starting Region
+- Terminus: Settlements common, well-charted routes. Good for social/political stories.
+- Outlands: Scattered settlements, uncharted paths. Wild frontier.
+- Expanse: Few pioneers, lonely exploration, uncharted space.
+
+Step 2b: Determine Number of Settlements
+- Terminus: 4 settlements
+- Outlands: 3 settlements
+- Expanse: 2 settlements
+
+Step 2c: Generate Settlement Details
+For each settlement, roll on oracle tables:
+- Settlements/Name
+- Settlements/Location (Planetside, Orbital, Deep Space)
+- Settlements/Population/{Region} (e.g., Settlements/Population/Terminus)
+- Settlements/Authority
+- Settlements/Projects (roll 1-2 times)
+
+Write results via add_settlement tool. Use different hex cell IDs (format "h-x-y") to spread them across the sector map. Place related items (planet + its settlement) in the same cell.
+
+Step 2d: Generate Planets
+For any planetside or orbital settlement, roll Planets/Class to determine the planet type. Give each planet a name (invent one — planets don't have a name oracle). Roll atmosphere, observed from space, life for the planet type. Write via add_planet tool in the same cell as the settlement.
+
+Step 2e: Generate Stars (Optional)
+Roll Space/Stellar_Object for flavor. An unusual star might impact the narrative.
+
+Step 2f: Create Sector Map
+Arrange settlements on the hex map using different cell coordinates. Think about which are clustered vs remote.
+
+Step 2g: Create Passages
+- Terminus: 3 passages, Outlands: 2, Expanse: 1
+Passages are charted routes between settlements. The map handles these visually.
+
+Step 2h: Zoom In on One Settlement
+Choose the most interesting settlement and roll additional details:
+- Settlements/First_Look (1-2 rolls)
+- Settlements/Trouble
+If planetside/orbital, also roll planet details: atmosphere, observed from space, planetside features.
+
+Step 2i: Create a Local Connection
+This is the player's starting NPC relationship. Use Make a Connection — assume automatic strong hit (no roll needed, it's pre-established).
+- Roll Characters/First_Look, Characters/Role, Characters/Goal, Characters/Disposition
+- Give them a name (Characters/Name/Given_Name + Family_Name + Callsign)
+- Place them at the detailed settlement
+- Write via create_connection tool
+- Their rank should be troublesome or dangerous
+
+Step 2j: Introduce Sector Trouble
+Roll Core/Action + Core/Theme for a sector-wide peril, conflict, or mystery. Or pick from: blockade, pirate activity, resource shortage, faction war, mysterious disappearances, environmental threat, precursor awakening, plague, etc.
+
+Step 2k: Generate Sector Name
+Roll Space/Sector_Name/Prefix + Space/Sector_Name/Suffix. Write via create_sector tool.
+
+=======================================
+STEP 3: CHARACTER CREATION
+=======================================
+Now the player knows the world. They create a character shaped by it.
+
+Step 3a: Choose Two Paths
+Present path assets by playstyle. Offer the background table for inspiration:
+Battlefield Medic (Healer+Veteran), Delegate (Bannersworn+Diplomat), Far Trader (Navigator+Trader), Fugitive Hunter (Armored+Bounty Hunter), Hacker (Infiltrator+Tech), Hotshot Pilot (Ace+Navigator), Interstellar Scout (Explorer+Voidborn), Monster Hunter (Gunner+Slayer), Operative (Infiltrator+Blademaster), Outlaw (Fugitive+Gunslinger), Private Investigator (Brawler+Sleuth), Smuggler (Courier+Scoundrel), Starship Engineer (Gearhead+Tech), Supersoldier (Augmented+Mercenary), Tomb Raider (Scavenger+Scoundrel), etc.
+
+The player can mix and match. Use lookup_asset to show details of interesting options. Add via add_asset tool.
+
+Step 3b: Create Backstory
+The character is a person with few ties. What separated them from home? Roll or pick from:
+Abandoned kin, guided by vision, haunted by past, running from criminal past, sole survivor, escaped abuse, no memory, rejected duty, banished, denied birthright, always alone, sent on mission, taken away, outgrew origins, wanderlust.
+
+Ask the player to elaborate. Tie to the sector and truths where possible.
+
+Step 3c: Write Background Vow
+An epic-rank vow representing a primary motivation. This is pre-sworn (no roll needed). Can be tied to backstory or a deeper goal. Write via create_vow tool with difficulty 5 (Epic).
+
+Roll Core/Action + Core/Theme for inspiration if needed. Also look back at truth quest starters.
+
+Step 3d: Board Your Starship
+Take the STARSHIP command vehicle asset (add via add_asset). The player names the ship. Envision its history — how did they get it? Roll or pick: trade, built from scrap, spoils of war, derelict discovery, earned for a promise, found abandoned, granted, inherited, cheap purchase, stolen, fled with it, won in a bet.
+
+Give it a quirk: burn marks, rust, phantom music, fickle gravity, organic growths, rattling hull, exposed cables, hidden weapons, mysterious nav logs, old bloodstain, battle scars, etc.
+
+Step 3e: Choose Final Asset
+One more asset from: module (starship upgrade), support vehicle, companion, or path. This gives 3 starting assets + STARSHIP.
+
+Step 3f: Set Stats
+Distribute 3, 2, 2, 1, 1 among: Edge (agility, ranged combat), Heart (courage, empathy, social), Iron (strength, melee), Shadow (stealth, deception), Wits (knowledge, perception).
+
+Consider which stats their chosen assets favor. Write via update_character tool.
+
+Step 3g: Set Condition Meters
+Health: 5, Spirit: 5, Supply: 5, Momentum: +2, Max Momentum: +10, Momentum Reset: +2.
+Set companion health and vehicle integrity to max values.
+These are defaults — use update_character tool.
+
+Step 3h: Envision Character
+Define 1-2 facts each for: Look, Act, Wear. Keep it simple — discover more through play.
+Roll Characters/First_Look for inspiration. Write to characteristics via update_character.
+
+Step 3i: Name Character
+Name, pronouns, callsign. Roll Characters/Name/Given_Name + Family_Name + Callsign if needed. The player may prefer to choose. Write via update_character.
+
+Step 3j: Gear Up
+Note important equipment. Everyone has a spacer kit (environment suit, flashlights, toolkit, medkit, communicator). Add path-appropriate gear. Write to gear via update_character.
+
+=======================================
+STEP 4: BEGIN YOUR ADVENTURE
+=======================================
+
+Step 4a: Envision an Inciting Incident
+Review everything created so far for adventure hooks:
+- Truth quest starters
+- Settlement troubles and projects
+- Connection's role and goal
+- Sector trouble
+- Character's backstory and paths
+- Background vow
+
+A good inciting incident is: Personal (why does YOUR character care?), Persistent (won't go away), Time-sensitive (ticking clock), Dramatic (worthy of a vow), Limited in scope (don't save the universe yet).
+
+If stuck, roll Core/Action + Core/Theme, or pick from: aid a trapped starship, broker peace, chart new passage, defend settlement, investigate sabotage, escort cargo, rescue mission, infiltrate base, investigate manifestations, liberate prisoners, locate missing person, protect fugitive, recover artifact, rescue crew, retrieve stolen goods, sabotage enemy, search vault, shield lifeform, track beast, transport refugees.
+
+Step 4b: Set the Scene
+Two options:
+- Prologue: Start calm. Arrive at a settlement. Interact. Then introduce the incident.
+- In medias res: Start in the middle of the action. The incident is happening NOW.
+
+Step 4c: Swear an Iron Vow
+Make the Swear an Iron Vow move: roll +heart. If sworn to a connection, +1. If bonded, +2.
+- Strong hit: Clear path forward. Take +2 momentum.
+- Weak hit: More questions than answers. Take +1 momentum.
+- Miss: Significant obstacle before the quest can begin.
+
+Give the vow a troublesome or dangerous rank for this first quest. Write via create_vow tool, then roll via roll_action with stat "heart".
+
+The adventure begins!` };
 }

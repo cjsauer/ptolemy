@@ -21,7 +21,7 @@ export interface TokenUsage {
 
 // --- System prompt ---
 
-const SYSTEM_PROMPT = `You are the Game Master for an Ironsworn: Starforged guided-play campaign. You narrate the story, interpret oracle results, call for moves, manage NPCs, and keep the fiction grounded in the Starforged setting.
+export const SYSTEM_PROMPT = `You are the Game Master for an Ironsworn: Starforged guided-play campaign. You narrate the story, interpret oracle results, call for moves, manage NPCs, and keep the fiction grounded in the Starforged setting.
 
 CORE RULES:
 - Starforged uses 3 dice: an action die (d6) + stat + adds vs two challenge dice (d10s).
@@ -36,74 +36,76 @@ PROGRESS TRACKS:
 - Troublesome: mark 3 boxes per mark. Dangerous: 2. Formidable: 1. Extreme: half box. Epic: quarter box.
 - Each box has 4 ticks. A full box = 4 ticks.
 
-YOUR BEHAVIOR:
+SOLO GM PRINCIPLES:
+
+Core Mindset:
+- Everything is playing. World-building, character creation, browsing oracles, imagining a sector — all of it counts. Never rush the player toward "real" gameplay.
+- "What happens next?" is the only essential question. Every scene, description, and oracle result must provoke curiosity, fear, excitement, or longing.
+- Play emotion, not mechanics. Story hangs on emotion. When describing a derelict, don't state dimensions — convey how it feels: eerie silence, the faint hum of a failing reactor, frost creeping across a viewport.
+- Stats are not story. A desperate smuggler who survived on reflexes alone since her crew was killed at Terminus Station — that is a story. Lead with personality, history, and feeling.
+
+World-Building and Scene-Setting:
+- Environment before character. Establish the place first — its mood, sensory texture. Describe rust-streaked corridors before asking what the player does. Then the character steps in with purpose.
+- History is your friend. Every derelict has a history. Every planet was settled for a reason. A single sentence of history transforms a generic location into a place with narrative gravity.
+- Specific items generate abstract ideas. A cracked data crystal in a dead courier's hand. A child's drawing sealed in a vacuum tube. Place a specific item, connect it to a person or place, and narrative threads emerge.
+- Use adjectives of connection and disconnection. Is a location eerie or magnificent? Shrouded or inviting? A single well-chosen adjective sets the tone and gives the player an emotional foothold.
+
+Narrative Drive:
+- Maintain a narrative trajectory. Always have at least one clear "point B" beyond the current scene — a destination, a goal, an unanswered question.
+- Words, not dice, get you through transitions. Before rolling on any oracle, examine the fiction: What is visible? What is the texture of this moment? What does the character know? Use oracle rolls for embellishment and surprise, not basic direction.
+- Avoid the yes/no dead end. Before resolving a binary question, ensure there are narrative branches for both outcomes. Both answers must advance the story.
+- Don't look to oracles for direction; look to oracles for embellishment. The engine is the narrative trajectory, the character's vows, the emotional stakes. Oracles add color, detail, and the unexpected.
+
+Character and NPC Craft:
+- Create characters with personality before stats. Background, motivations, desires, traumas, connections — these are the springboard for story.
+- Give NPCs attitudes, not just roles. A suspicious, fatigued station mechanic hiding something is a story. Always assign at least one emotional attitude.
+- Let character attitudes influence outcomes. A worried character might lose confidence; a defiant one might push harder. These emotional states should shade how you interpret results.
+
+Pacing and Structure:
+- Telescope between detail levels. A tense negotiation might unfold sentence by sentence. A three-day journey might be a paragraph. Zoom in for drama, zoom out for pace.
+- Use game structure as scaffolding. "After three scenes, introduce a complication." These structures are a lifeline against stagnation.
+- Know when to skip rules. If supply tracking isn't adding to the experience, handwave it. The rules you don't use are as important as the ones you do.
+
+Vaults, Derelicts, and Confined Spaces:
+- Confined spaces create information scarcity, resource pressure, tactical constraint, and emotional intensity.
+- Describe the oppressive closeness. Let the player hear sounds they can't identify. Make each new chamber a small revelation. The location itself is the story.
+
+Intervention and Surprise:
+- Introduce twists through fiction, not fiat. Let twists emerge from elements already present — an NPC's hidden agenda, a physical event, an item that changes significance.
+- Balance planning and surprise. Have a loose plan, but let the fiction surprise you. The best sessions are ones where even the GM is genuinely curious about what happens next.
+
+YOUR TOOL BEHAVIOR:
 1. Always announce the move name before rolling (e.g., "Let's Face Danger with Edge").
 2. Use tools to roll dice — never simulate or invent roll results.
 3. After every action roll, check if the player could burn momentum for a better result and mention it.
 4. When challenge dice match, flag it and make the narrative consequences more dramatic.
-5. Use oracles generously to inspire fiction — don't invent locations, names, or events from nothing when an oracle exists.
+5. Use oracles to inspire fiction — don't invent locations, names, or events from nothing when an oracle exists.
 6. Respect player agency. You describe the world and consequences; the player decides their character's actions and feelings.
 7. Write journal entries to record key narrative moments, decisions, and discoveries. The journal is the permanent campaign record.
-8. Keep narration vivid but concise. 1-2 paragraphs per beat, not novels.
-9. When a scene ends, briefly recap the situation and ask what the player wants to do next.
-10. Track fictional positioning — wounds matter, NPCs remember, the world reacts.
+8. Track fictional positioning — wounds matter, NPCs remember, the world reacts.
 
-MOVES YOU SHOULD KNOW:
-- Face Danger (any stat based on approach)
-- Secure an Advantage (any stat)
-- Gather Information (wits)
-- Compel (heart/iron/shadow)
-- Aid Your Ally (any stat — but this is solo, so rare)
-- Make a Connection (heart)
-- Forge a Bond (heart, progress roll)
-- Swear an Iron Vow (heart)
-- Reach a Milestone (mark progress on vow)
-- Fulfill Your Vow (progress roll)
-- Take Decisive Action (progress roll on combat)
-- Endure Harm (health or iron)
-- Endure Stress (spirit or heart)
-- Lose Momentum (reduce momentum)
-- Face Death / Face Desolation / Overcome Destruction (progress rolls at 0)
-- Sojourn (heart — recover in community)
-- Heal (iron or wits)
-- Repair (wits)
-- Resupply (wits)
+ALL MOVES (use lookup_move for full text):
+
+Adventure: Face Danger (any stat), Secure an Advantage (any stat), Gather Information (wits), Compel (heart/iron/shadow), Aid Your Ally, Check Your Gear (supply)
+Quest: Swear an Iron Vow (heart), Reach a Milestone, Fulfill Your Vow (progress roll), Forsake Your Vow
+Connection: Make a Connection (heart), Develop Your Relationship, Test Your Relationship (heart), Forge a Bond (progress roll)
+Exploration: Undertake an Expedition (any stat), Explore a Waypoint (wits), Make a Discovery, Confront Chaos, Finish an Expedition (progress roll), Set a Course (supply)
+Combat: Enter the Fray (heart/iron/shadow/wits), Gain Ground (any stat), React Under Fire (any stat), Strike (iron/edge), Clash (iron/edge), Take Decisive Action (progress roll), Face Defeat, Battle (any stat)
+Suffer: Lose Momentum, Endure Harm (health or iron), Endure Stress (spirit or heart), Companion Takes a Hit, Sacrifice Resources (supply), Withstand Damage (integrity)
+Recover: Sojourn (heart), Heal (iron), Hearten (heart), Resupply (heart), Repair (wits)
+Threshold: Face Death (heart), Face Desolation (heart), Overcome Destruction (integrity, progress roll)
+Legacy: Earn Experience, Advance, Continue a Legacy
+Fate: Ask the Oracle, Pay the Price
+Scene Challenge: Begin the Scene, Face Danger, Secure an Advantage, Finish the Scene (progress roll)
 
 When the player describes an action, identify the appropriate move, ask for confirmation if ambiguous, then roll. Narrate the outcome based on the result, apply mechanical consequences, and advance the fiction.
 
 CAMPAIGN SETUP:
-If the player asks to set up a new campaign (or their character has no stats/assets), walk them through the Starforged Chapter 2 procedure conversationally. This should feel like a conversation, not a form.
-
-1. **Setting Truths** — Present each truth category one at a time, offer the 3 options or a custom option. Player picks or you roll. Write via set_truths.
-2. **Character Creation**:
-   - Choose 2 paths (browse assets, present options by playstyle)
-   - Create backstory (ask questions, roll Action+Theme for inspiration)
-   - Write a background vow (epic rank)
-   - Board starship (add STARSHIP asset, player names the ship)
-   - Choose a final asset
-   - Set stats (distribute 3, 2, 2, 1, 1 among edge/heart/iron/shadow/wits)
-   - Envision character (roll first-look oracle, ask player to describe)
-   - Name character (offer name oracle or player chooses)
-   - Gear up (spacer kit + path-appropriate gear)
-   - Write all via update_character + add_asset
-3. **Build Starting Sector**:
-   - Generate sector name via roll_oracle + create_sector
-   - Generate 1-2 settlements via roll_oracle + add_settlement
-   - Zoom in on starting settlement details
-   - Create a local connection (Make a Connection, auto strong hit) via create_connection
-   - Introduce sector trouble via roll_oracle
-4. **Begin Your Adventure**:
-   - Review settlement trouble + connection + sector peril
-   - Suggest an inciting incident (personal, won't go away, ticking clock, limited scope)
-   - Discuss until it excites the player
-   - Swear an Iron Vow (troublesome or dangerous rank, roll +heart)
-   - Begin play
-
-Go through each step at a natural pace — don't rush. Let the player make choices and ask questions. The existing UI (Character page, Sector page, Challenges page) updates in real time as you populate data via tools.`;
+If the player asks to set up a new campaign (or their character has no stats/assets), call get_campaign_setup_guide FIRST to load the full procedure into context. Then follow it step by step.`;
 
 // --- Tool definitions for the Anthropic API ---
 
-const TOOL_DEFINITIONS: Anthropic.Tool[] = [
+export const TOOL_DEFINITIONS: Anthropic.Tool[] = [
   {
     name: 'get_game_state',
     description: 'Get a consolidated snapshot of the current game state: character stats, meters, momentum, impacts, active vows with progress, clocks, assets, location.',
@@ -138,11 +140,23 @@ const TOOL_DEFINITIONS: Anthropic.Tool[] = [
   },
   {
     name: 'roll_oracle',
-    description: 'Roll on a Starforged oracle table. Use dataforged IDs like "Starforged/Oracles/Core/Action" or "Starforged/Oracles/Characters/Name/Given_Name".',
+    description: `Roll on a Starforged oracle table. Use full dataforged IDs starting with "Starforged/Oracles/".
+
+Common oracle IDs:
+- Core: Core/Action, Core/Theme, Core/Descriptor, Core/Focus
+- Characters: Characters/Name/Given_Name, Characters/Name/Family_Name, Characters/Name/Callsign, Characters/First_Look, Characters/Disposition, Characters/Role, Characters/Goal, Characters/Revealed_Aspect
+- Space: Space/Sector_Name/Prefix, Space/Sector_Name/Suffix, Space/Stellar_Object, Space/Sighting/Terminus (or Outlands, Expanse)
+- Planets: Planets/Class, Planets/{Type}/Atmosphere, Planets/{Type}/Settlements/Terminus, Planets/{Type}/Observed_From_Space, Planets/{Type}/Feature, Planets/{Type}/Life (Types: Desert, Furnace, Grave, Ice, Jovian, Jungle, Ocean, Rocky, Shattered, Tainted, Vital). NOTE: Planets do NOT have a Name oracle — invent planet names or use Core/Action+Core/Theme for inspiration.
+- Settlements: Settlements/Name, Settlements/Location, Settlements/Population/Terminus, Settlements/First_Look, Settlements/Authority, Settlements/Projects, Settlements/Trouble
+- Starships: Starships/Name, Starships/Type, Starships/Fleet, Starships/Mission/Terminus, Starships/Initial_Contact, Starships/First_Look
+- Factions: Factions/Name_Template, Factions/Type, Factions/Influence, Factions/Sphere, Factions/Projects, Factions/Relationships, Factions/Quirks, Factions/Rumors
+- Creatures: Creatures/Environment, Creatures/Scale, Creatures/Ultra-scale, Creatures/Basic_Form/{Env}, Creatures/First_Look, Creatures/Encountered_Behavior, Creatures/Revealed_Aspect
+- Derelicts: Derelicts/Location, Derelicts/Type/{Location}, Derelicts/Condition, Derelicts/Outer_First_Look, Derelicts/Inner_First_Look, Derelicts/{Zone}/Area, Derelicts/{Zone}/Feature, Derelicts/{Zone}/Peril, Derelicts/{Zone}/Opportunity
+- Moves: Moves/Ask_the_Oracle/{Likelihood}, Moves/Pay_the_Price`,
     input_schema: {
       type: 'object' as const,
       properties: {
-        oracle_id: { type: 'string', description: 'The dataforged oracle table ID' },
+        oracle_id: { type: 'string', description: 'Full dataforged oracle ID, e.g. "Starforged/Oracles/Core/Action". Always prefix with "Starforged/Oracles/".' },
       },
       required: ['oracle_id'],
     },
@@ -277,7 +291,7 @@ const TOOL_DEFINITIONS: Anthropic.Tool[] = [
       type: 'object' as const,
       properties: {
         sector_index: { type: 'number', description: 'Sector index' },
-        cell_id: { type: 'string', description: 'Cell ID in the sector' },
+        cell_id: { type: 'string', description: 'Hex grid cell ID in format "h-{x}-{y}" (e.g. "h-5-3"). Place related items in the same cell. Use different cells to spread locations across the sector map.' },
         name: { type: 'string', description: 'NPC name' },
         role: { type: 'string' },
         disposition: { type: 'string' },
@@ -334,7 +348,7 @@ const TOOL_DEFINITIONS: Anthropic.Tool[] = [
       type: 'object' as const,
       properties: {
         sector_index: { type: 'number' },
-        cell_id: { type: 'string' },
+        cell_id: { type: 'string', description: 'Hex cell ID, format "h-{x}-{y}"' },
         name: { type: 'string' },
         type: { type: 'string', enum: ['Desert', 'Furnace', 'Grave', 'Ice', 'Jovian', 'Jungle', 'Ocean', 'Rocky', 'Shattered', 'Tainted', 'Vital'] },
         atmosphere: { type: 'string' },
@@ -353,7 +367,7 @@ const TOOL_DEFINITIONS: Anthropic.Tool[] = [
       type: 'object' as const,
       properties: {
         sector_index: { type: 'number' },
-        cell_id: { type: 'string' },
+        cell_id: { type: 'string', description: 'Hex cell ID, format "h-{x}-{y}"' },
         name: { type: 'string' },
         location: { type: 'string', enum: ['Planetside', 'Orbital', 'Deep Space'] },
         population: { type: 'string' },
@@ -372,7 +386,7 @@ const TOOL_DEFINITIONS: Anthropic.Tool[] = [
       type: 'object' as const,
       properties: {
         sector_index: { type: 'number' },
-        cell_id: { type: 'string' },
+        cell_id: { type: 'string', description: 'Hex cell ID, format "h-{x}-{y}"' },
         name: { type: 'string' },
         class: { type: 'string' },
         fleet: { type: 'string' },
@@ -390,7 +404,7 @@ const TOOL_DEFINITIONS: Anthropic.Tool[] = [
       type: 'object' as const,
       properties: {
         sector_index: { type: 'number' },
-        cell_id: { type: 'string' },
+        cell_id: { type: 'string', description: 'Hex cell ID, format "h-{x}-{y}"' },
         name: { type: 'string' },
         location: { type: 'string', enum: ['Planetside', 'Orbital', 'Deep Space'] },
         type: { type: 'string', enum: ['Starship', 'Settlement'] },
@@ -407,7 +421,7 @@ const TOOL_DEFINITIONS: Anthropic.Tool[] = [
       type: 'object' as const,
       properties: {
         sector_index: { type: 'number' },
-        cell_id: { type: 'string' },
+        cell_id: { type: 'string', description: 'Hex cell ID, format "h-{x}-{y}"' },
         name: { type: 'string' },
         environment: { type: 'string', enum: ['Space', 'Interior', 'Land', 'Liquid', 'Air'] },
         scale: { type: 'string' },
@@ -509,6 +523,15 @@ const TOOL_DEFINITIONS: Anthropic.Tool[] = [
       required: [],
     },
   },
+  {
+    name: 'get_campaign_setup_guide',
+    description: 'Load the full campaign setup procedure into context. Call this FIRST when a player wants to create a new campaign. Returns the complete step-by-step guide for truths, sector building, character creation, and adventure start.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {},
+      required: [],
+    },
+  },
 ];
 
 // --- Tool executor ---
@@ -583,6 +606,8 @@ function executeTool(name: string, input: Record<string, unknown>, campaign: ICa
       return tools.createFaction(campaign, input as Partial<IFaction> & { name: string });
     case 'burn_momentum':
       return tools.burnMomentum(campaign);
+    case 'get_campaign_setup_guide':
+      return tools.getCampaignSetupGuide();
     default:
       throw new Error(`Unknown tool: ${name}`);
   }
@@ -590,7 +615,7 @@ function executeTool(name: string, input: Record<string, unknown>, campaign: ICa
 
 // --- Build game state context block ---
 
-function buildGameStateContext(campaign: ICampaign): string {
+export function buildGameStateContext(campaign: ICampaign): string {
   const state = tools.getGameState(campaign);
   return `<game_state>
 ${JSON.stringify(state, null, 2)}
@@ -599,7 +624,7 @@ ${JSON.stringify(state, null, 2)}
 
 // --- Build journal context ---
 
-function buildJournalContext(campaign: ICampaign): string {
+export function buildJournalContext(campaign: ICampaign): string {
   if (!campaign.journal || campaign.journal.length === 0) return '';
 
   const journalText = campaign.journal
@@ -617,9 +642,7 @@ function buildMessages(
 ): Anthropic.MessageParam[] {
   const messages: Anthropic.MessageParam[] = [];
 
-  // Add chat history (keep last 30 messages to stay within context)
-  const recentHistory = chatHistory.slice(-30);
-  for (const msg of recentHistory) {
+  for (const msg of chatHistory) {
     messages.push({
       role: msg.role,
       content: typeof msg.content === 'string' ? msg.content : msg.content,
@@ -635,25 +658,23 @@ function buildMessages(
   return messages;
 }
 
-// --- Main agentic loop ---
+// --- Prompt builder (single source of truth for what Claude sees) ---
 
-export async function* runTurn(
-  apiKey: string,
-  model: string,
+export interface BuiltPrompt {
+  system: Anthropic.TextBlockParam[];
+  messages: Anthropic.MessageParam[];
+  tools: Anthropic.Tool[];
+}
+
+export function buildPrompt(
   campaign: ICampaign,
   playerAction: string,
   chatHistory: IChatMessage[]
-): AsyncGenerator<AgentEvent> {
-  const client = new Anthropic({
-    apiKey,
-    dangerouslyAllowBrowser: true,
-  });
-
-  // Build system prompt with game state and journal
+): BuiltPrompt {
   const journalContext = buildJournalContext(campaign);
   const gameStateContext = buildGameStateContext(campaign);
 
-  const systemContent: Anthropic.TextBlockParam[] = [
+  const system: Anthropic.TextBlockParam[] = [
     {
       type: 'text',
       text: SYSTEM_PROMPT,
@@ -662,19 +683,39 @@ export async function* runTurn(
   ];
 
   if (journalContext) {
-    systemContent.push({
+    system.push({
       type: 'text',
       text: journalContext,
       cache_control: { type: 'ephemeral' },
     });
   }
 
-  systemContent.push({
+  system.push({
     type: 'text',
     text: gameStateContext,
   });
 
   const messages = buildMessages(chatHistory, playerAction);
+
+  return { system, messages, tools: TOOL_DEFINITIONS };
+}
+
+// --- Main agentic loop ---
+
+export async function* runTurn(
+  apiKey: string,
+  model: string,
+  campaign: ICampaign,
+  playerAction: string,
+  chatHistory: IChatMessage[],
+  abortSignal?: AbortSignal
+): AsyncGenerator<AgentEvent> {
+  const client = new Anthropic({
+    apiKey,
+    dangerouslyAllowBrowser: true,
+  });
+
+  const { system: systemContent, messages, tools } = buildPrompt(campaign, playerAction, chatHistory);
 
   const totalUsage: TokenUsage = {
     inputTokens: 0,
@@ -686,19 +727,25 @@ export async function* runTurn(
   // Agentic loop: keep going until Claude stops calling tools
   let continueLoop = true;
   while (continueLoop) {
+    if (abortSignal?.aborted) break;
+
     try {
       const stream = client.messages.stream({
         model,
         max_tokens: 4096,
         system: systemContent,
         messages,
-        tools: TOOL_DEFINITIONS,
+        tools,
       });
 
       const toolUses: { id: string; name: string; input: Record<string, unknown> }[] = [];
 
       // Stream events as they arrive
       for await (const event of stream) {
+        if (abortSignal?.aborted) {
+          stream.abort();
+          break;
+        }
         if (event.type === 'content_block_delta') {
           if (event.delta.type === 'text_delta') {
             yield { type: 'text_delta', text: event.delta.text };
@@ -769,6 +816,9 @@ export async function* runTurn(
           role: 'user',
           content: toolResults,
         });
+
+        // Emit a separator so text from the next API call doesn't smash into the previous text
+        yield { type: 'text_delta', text: '\n\n' };
 
         // Continue the loop for another API call
       } else {

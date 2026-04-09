@@ -184,3 +184,90 @@ body {
   background: rgba(200, 164, 92, 0.08);
   border-left: 2px solid $primary;
 }
+
+// --- GM chat markdown rendering ---
+.gm-text {
+  p {
+    margin: 8px 0;
+    line-height: 1.6;
+  }
+  strong {
+    color: $primary;
+  }
+  em {
+    color: rgba(255, 255, 255, 0.7);
+  }
+  a {
+    color: $info;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(92, 184, 224, 0.3);
+    &:hover {
+      color: lighten($info, 10%);
+    }
+  }
+  h1 {
+    font-family: Teko;
+    font-size: 1.4rem;
+    font-weight: normal;
+    letter-spacing: 0.04em;
+    margin: 12px 0 4px;
+    color: $primary;
+  }
+  h2 {
+    font-family: Teko;
+    font-size: 1.25rem;
+    font-weight: normal;
+    letter-spacing: 0.04em;
+    margin: 10px 0 4px;
+    color: $primary;
+  }
+  h3 {
+    font-family: Teko;
+    font-size: 1.1rem;
+    font-weight: normal;
+    letter-spacing: 0.04em;
+    margin: 8px 0 4px;
+    color: $primary;
+  }
+  h4, h5, h6 {
+    font-size: 1rem;
+    font-weight: bold;
+    margin: 6px 0 4px;
+    color: rgba(200, 164, 92, 0.8);
+  }
+  ul, ol {
+    padding-left: 20px;
+    margin: 4px 0;
+  }
+  li {
+    margin: 4px 0;
+    line-height: 1.5;
+  }
+  code {
+    background: rgba(200, 164, 92, 0.08);
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 0.9em;
+  }
+  table {
+    border-collapse: collapse;
+    margin: 8px 0;
+    width: 100%;
+    font-size: 0.9em;
+  }
+  th {
+    background: rgba(200, 164, 92, 0.1);
+    color: $primary;
+    font-weight: bold;
+    text-align: left;
+    padding: 6px 10px;
+    border-bottom: 1px solid rgba(200, 164, 92, 0.2);
+  }
+  td {
+    padding: 5px 10px;
+    border-bottom: 1px solid rgba(200, 164, 92, 0.06);
+  }
+  tr:hover {
+    background: rgba(200, 164, 92, 0.04);
+  }
+}
