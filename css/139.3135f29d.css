@@ -1,0 +1,1 @@
+.c-btn{background-color:#a8893c;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)}.hexbox{cursor:pointer;margin:0;padding:0}.box polygon.hex{fill:#d8dee9;stroke:#0c0e18;stroke-width:2;transition:fill .3s ease}.box polygon.checked{fill:#a8893c;transition:fill .3s ease}.box>polygon.filler{fill:#e0a0d0;scale:.5}
