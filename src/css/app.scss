@@ -254,6 +254,8 @@ body {
     margin: 8px 0;
     width: 100%;
     font-size: 0.9em;
+    display: block;
+    overflow-x: auto;
   }
   th {
     background: rgba(200, 164, 92, 0.1);

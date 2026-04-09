@@ -468,11 +468,15 @@ export default defineComponent({
   display: flex
   flex-direction: column
   flex: 1
+  overflow-x: hidden
 
 .message-list
   max-width: 1200px
   margin: 0 auto
   width: 100%
+  overflow-x: hidden
+  overflow-wrap: break-word
+  word-break: break-word
 
 .input-bar
   position: sticky

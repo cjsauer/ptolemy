@@ -60,6 +60,7 @@ export default defineComponent({
 <style lang="sass" scoped>
 .chat-message
   max-width: 90%
+  overflow-x: hidden
 
 .chat-message.user
   margin-left: auto
