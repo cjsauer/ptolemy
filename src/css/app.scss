@@ -185,6 +185,40 @@ body {
   border-left: 2px solid $primary;
 }
 
+// --- Shared header sizing (chat + journal editor) ---
+.q-editor__content {
+  h1 {
+    font-family: Teko;
+    font-size: 1.4rem;
+    font-weight: normal;
+    letter-spacing: 0.04em;
+    margin: 12px 0 4px;
+    color: $primary;
+  }
+  h2 {
+    font-family: Teko;
+    font-size: 1.25rem;
+    font-weight: normal;
+    letter-spacing: 0.04em;
+    margin: 10px 0 4px;
+    color: $primary;
+  }
+  h3 {
+    font-family: Teko;
+    font-size: 1.1rem;
+    font-weight: normal;
+    letter-spacing: 0.04em;
+    margin: 8px 0 4px;
+    color: $primary;
+  }
+  h4, h5, h6 {
+    font-size: 1rem;
+    font-weight: bold;
+    margin: 6px 0 4px;
+    color: rgba(200, 164, 92, 0.8);
+  }
+}
+
 // --- GM chat markdown rendering ---
 .gm-text {
   p {
