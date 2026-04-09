@@ -431,6 +431,40 @@
 
         <q-separator class="q-my-sm" />
 
+        <q-card-section class="sf-header text-h6">Image Generation</q-card-section>
+
+        <q-card-section>
+          <q-input
+            v-model="config.data.openaiApiKey"
+            label="OpenAI API Key"
+            type="password"
+            standout="bg-blue-grey text-white"
+            :input-style="{ color: '#ECEFF4' }"
+            hint="For DALL-E image generation. Optional."
+          >
+            <template v-slot:prepend>
+              <q-icon name="key" />
+            </template>
+          </q-input>
+        </q-card-section>
+
+        <q-card-section v-if="config.data.openaiApiKey">
+          <q-input
+            v-model="campaign.data.imageStyle"
+            label="Image Style (per campaign)"
+            standout="bg-blue-grey text-white"
+            :input-style="{ color: '#ECEFF4' }"
+            autogrow
+            hint="Prepended to every image prompt. e.g. 'Dark sci-fi illustration, muted colors, dramatic lighting, concept art style'"
+          >
+            <template v-slot:prepend>
+              <q-icon name="palette" />
+            </template>
+          </q-input>
+        </q-card-section>
+
+        <q-separator class="q-my-sm" />
+
         <q-card-section class="sf-header text-h6">Campaign Sync</q-card-section>
 
         <q-card-section>

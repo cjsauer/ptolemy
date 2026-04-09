@@ -68,6 +68,7 @@ export interface IConfig {
   journalTab?: boolean;
   claudeApiKey?: string;
   claudeModel?: string;
+  openaiApiKey?: string;
   githubToken?: string;
   gistId?: string;
   map: {
@@ -352,6 +353,7 @@ export interface ICampaign {
   gmChat?: IChatMessage[]; // deprecated, migrated to sessions
   sessions?: ISession[];
   currentSession?: string; // session id
+  imageStyle?: string; // style prompt prepended to all image generation
   lastModified?: number;
 }
 

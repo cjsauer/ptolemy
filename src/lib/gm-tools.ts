@@ -1,5 +1,6 @@
 import { ICampaign, IProgressTrack, EAtO, INPC, IFaction, ERegion, ISGAsset, IPlanet, ISettlement, IStarship, IDerelict, ICreature, IStats, IRollData, ECellStatus } from 'src/components/models';
 import { moveRoll } from 'src/lib/roll';
+import { generateImage } from 'src/lib/image-gen';
 import * as oracle from 'src/lib/oracles';
 import { Difficulty, NewProgressTrack, NewClock } from 'src/lib/tracks';
 import { NewNPC, NewCell, NewPlanet, NewSettlement, NewShip, NewDerelict, NewCreature, NewSector } from 'src/lib/sector';
@@ -396,6 +397,26 @@ export function addJournal(
   if (idx < 0 || idx >= campaign.journal.length) throw new Error(`Journal entry ${idx} does not exist`);
   campaign.journal[idx].content += content;
   return { entryIndex: idx };
+}
+
+export function createJournalEntry(
+  campaign: ICampaign,
+  title: string,
+  content: string
+): { entryIndex: number; title: string } {
+  campaign.journal.unshift({ title, content, pinned: false });
+  return { entryIndex: 0, title };
+}
+
+export function updateJournalEntry(
+  campaign: ICampaign,
+  entryIndex: number,
+  changes: { title?: string; content?: string }
+): { entryIndex: number } {
+  if (entryIndex < 0 || entryIndex >= campaign.journal.length) throw new Error(`Journal entry ${entryIndex} does not exist`);
+  if (changes.title !== undefined) campaign.journal[entryIndex].title = changes.title;
+  if (changes.content !== undefined) campaign.journal[entryIndex].content = changes.content;
+  return { entryIndex };
 }
 
 export function createConnection(
@@ -866,4 +887,14 @@ Make the Swear an Iron Vow move: roll +heart. If sworn to a connection, +1. If b
 Give the vow a troublesome or dangerous rank for this first quest. Write via create_vow tool, then roll via roll_action with stat "heart".
 
 The adventure begins!` };
+}
+
+export async function generateSceneImage(
+  openaiApiKey: string,
+  prompt: string,
+  campaign: ICampaign
+): Promise<{ imageUrl: string; revisedPrompt: string }> {
+  if (!openaiApiKey) throw new Error('OpenAI API key not configured. Set it in Claude GM Settings.');
+  const result = await generateImage(openaiApiKey, prompt, campaign.imageStyle);
+  return { imageUrl: result.url, revisedPrompt: result.revisedPrompt };
 }

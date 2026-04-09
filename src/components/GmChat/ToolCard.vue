@@ -92,6 +92,11 @@
       Burned momentum! Reset to {{ result.newMomentum }}
     </div>
 
+    <!-- Generated Image -->
+    <div v-else-if="name === 'generate_image' && result.imageUrl" class="image-card">
+      <img :src="result.imageUrl" class="generated-image" />
+    </div>
+
     <!-- Generic fallback -->
     <div v-else class="compact-card">
       <q-icon name="mdi-cog" size="sm" class="q-mr-xs" />
@@ -172,4 +177,14 @@ export default defineComponent({
   font-family: Teko
   letter-spacing: 0.06em
   text-transform: uppercase
+
+.image-card
+  border-radius: 8px
+  overflow: hidden
+
+.generated-image
+  width: 100%
+  max-width: 512px
+  border-radius: 8px
+  display: block
 </style>

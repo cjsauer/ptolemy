@@ -274,7 +274,7 @@ Common oracle IDs:
   },
   {
     name: 'add_journal',
-    description: 'Append narration/content to the campaign journal. Use HTML formatting. This is the permanent campaign record.',
+    description: 'Append HTML content to an existing journal entry. Use this to add to an entry incrementally.',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -282,6 +282,31 @@ Common oracle IDs:
         entry_index: { type: 'number', description: 'Journal entry index (default 0, the most recent)' },
       },
       required: ['content'],
+    },
+  },
+  {
+    name: 'create_journal_entry',
+    description: 'Create a new journal entry with a title and content. Use this to start a new entry (e.g. for a new session, a new chapter, or a major event). New entries appear at the top of the journal.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        title: { type: 'string', description: 'Entry title' },
+        content: { type: 'string', description: 'HTML content' },
+      },
+      required: ['title', 'content'],
+    },
+  },
+  {
+    name: 'update_journal_entry',
+    description: 'Replace the title or content of an existing journal entry. Use this to correct or rewrite an entry instead of appending.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        entry_index: { type: 'number', description: 'Journal entry index' },
+        title: { type: 'string', description: 'New title (optional)' },
+        content: { type: 'string', description: 'New content — replaces existing content entirely (optional)' },
+      },
+      required: ['entry_index'],
     },
   },
   {
@@ -545,11 +570,26 @@ Common oracle IDs:
       required: ['object_type', 'name', 'changes'],
     },
   },
+  {
+    name: 'generate_image',
+    description: 'Generate an image using DALL-E. Use this to illustrate scenes, characters, locations, or dramatic moments. The campaign\'s image style is automatically prepended. Returns a data URL that can be embedded in journal entries or chat.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        prompt: { type: 'string', description: 'Detailed visual description of the image to generate. Be specific about composition, lighting, mood, and subject.' },
+      },
+      required: ['prompt'],
+    },
+  },
 ];
 
 // --- Tool executor ---
 
-function executeTool(name: string, input: Record<string, unknown>, campaign: ICampaign): unknown {
+interface ToolContext {
+  openaiApiKey?: string;
+}
+
+async function executeTool(name: string, input: Record<string, unknown>, campaign: ICampaign, ctx?: ToolContext): Promise<unknown> {
   switch (name) {
     case 'get_game_state':
       return tools.getGameState(campaign);
@@ -575,6 +615,10 @@ function executeTool(name: string, input: Record<string, unknown>, campaign: ICa
       return tools.createProgressTrack(campaign, input.name as string, input.difficulty as number, input.notes as string);
     case 'add_journal':
       return tools.addJournal(campaign, input.content as string, input.entry_index as number);
+    case 'create_journal_entry':
+      return tools.createJournalEntry(campaign, input.title as string, input.content as string);
+    case 'update_journal_entry':
+      return tools.updateJournalEntry(campaign, input.entry_index as number, { title: input.title as string, content: input.content as string });
     case 'create_connection': {
       const { sector_index, cell_id, ...npcData } = input;
       return tools.createConnection(campaign, sector_index as number, cell_id as string, npcData as Partial<INPC> & { name: string });
@@ -623,6 +667,8 @@ function executeTool(name: string, input: Record<string, unknown>, campaign: ICa
       return tools.getCampaignSetupGuide();
     case 'update_sector_object':
       return tools.updateSectorObject(campaign, input.object_type as 'planet' | 'settlement' | 'starship' | 'derelict' | 'creature', input.name as string, input.changes as Record<string, unknown>);
+    case 'generate_image':
+      return tools.generateSceneImage(ctx?.openaiApiKey || '', input.prompt as string, campaign);
     default:
       throw new Error(`Unknown tool: ${name}`);
   }
@@ -651,6 +697,11 @@ export function buildJournalContext(campaign: ICampaign): string {
 
 // --- Convert chat history to Anthropic message format ---
 
+// Strip base64 data URLs from content to avoid sending megabytes of image data to Claude
+function stripDataUrls(content: string): string {
+  return content.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]+/g, '[generated image]');
+}
+
 function buildMessages(
   chatHistory: IChatMessage[],
   playerAction: string
@@ -658,9 +709,10 @@ function buildMessages(
   const messages: Anthropic.MessageParam[] = [];
 
   for (const msg of chatHistory) {
+    const content = typeof msg.content === 'string' ? stripDataUrls(msg.content) : msg.content;
     messages.push({
       role: msg.role,
-      content: typeof msg.content === 'string' ? msg.content : msg.content,
+      content,
     });
   }
 
@@ -723,7 +775,8 @@ export async function* runTurn(
   campaign: ICampaign,
   playerAction: string,
   chatHistory: IChatMessage[],
-  abortSignal?: AbortSignal
+  abortSignal?: AbortSignal,
+  toolContext?: ToolContext
 ): AsyncGenerator<AgentEvent> {
   const client = new Anthropic({
     apiKey,
@@ -807,7 +860,7 @@ export async function* runTurn(
         const toolResults: Anthropic.ToolResultBlockParam[] = [];
         for (const tool of toolUses) {
           try {
-            const result = executeTool(tool.name, tool.input, campaign);
+            const result = await executeTool(tool.name, tool.input, campaign, toolContext);
             yield { type: 'tool_result', name: tool.name, result };
             toolResults.push({
               type: 'tool_result',
