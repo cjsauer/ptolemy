@@ -333,6 +333,13 @@ export interface IChatToolCall {
   result: Record<string, unknown> | string;
 }
 
+export interface ISession {
+  id: string;
+  name: string;
+  chat: IChatMessage[];
+  createdAt: number;
+}
+
 export interface ICampaign {
   id: string;
   name: string;
@@ -342,7 +349,9 @@ export interface ICampaign {
   truths: ITruths;
   sectors: ISector[];
   factions: IFaction[];
-  gmChat?: IChatMessage[];
+  gmChat?: IChatMessage[]; // deprecated, migrated to sessions
+  sessions?: ISession[];
+  currentSession?: string; // session id
   lastModified?: number;
 }
 

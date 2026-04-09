@@ -1,5 +1,33 @@
 <template>
   <div class="gm-chat">
+    <!-- Session bar -->
+    <div class="session-bar row items-center no-wrap q-px-sm q-py-xs">
+      <q-btn-dropdown flat dense no-caps :label="currentSession?.name || 'No session'" size="sm" color="primary" class="session-dropdown">
+        <q-list dense>
+          <q-item
+            v-for="s in sessions"
+            :key="s.id"
+            clickable
+            v-close-popup
+            @click="switchToSession(s.id)"
+            :active="s.id === currentSession?.id"
+          >
+            <q-item-section>
+              <q-item-label>{{ s.name }}</q-item-label>
+              <q-item-label caption>{{ new Date(s.createdAt).toLocaleDateString() }} · {{ s.chat.length }} messages</q-item-label>
+            </q-item-section>
+          </q-item>
+          <q-separator />
+          <q-item clickable v-close-popup @click="newSession()">
+            <q-item-section avatar>
+              <q-icon name="add" size="xs" />
+            </q-item-section>
+            <q-item-section>New Session</q-item-section>
+          </q-item>
+        </q-list>
+      </q-btn-dropdown>
+    </div>
+
     <!-- Messages -->
     <div ref="messageList" class="col q-pa-md message-list">
       <div v-if="messages.length === 0" class="text-center text-grey q-mt-xl">
@@ -203,6 +231,8 @@ import { useChat } from 'src/store/chat';
 import { IChatMessage } from 'src/components/models';
 import { runTurn, buildPrompt } from 'src/lib/gm-agent';
 import { createSnapshot, restoreSnapshot } from 'src/lib/snapshots';
+import { getCurrentSession, createSession, ensureSessions } from 'src/lib/sessions';
+import { ISession } from 'src/components/models';
 import ChatMessage from './ChatMessage.vue';
 import ToolCard from './ToolCard.vue';
 
@@ -223,9 +253,28 @@ export default defineComponent({
     const messageList = ref<HTMLElement | null>(null);
     let abortController: AbortController | null = null;
 
-    const messages = computed((): IChatMessage[] => {
-      return campaign.data.gmChat || [];
+    // Session management
+    const currentSession = computed((): ISession | null => {
+      ensureSessions(campaign.data);
+      return getCurrentSession(campaign.data);
     });
+
+    const sessions = computed((): ISession[] => {
+      ensureSessions(campaign.data);
+      return campaign.data.sessions || [];
+    });
+
+    const messages = computed((): IChatMessage[] => {
+      return currentSession.value?.chat || [];
+    });
+
+    const newSession = (name?: string) => {
+      createSession(campaign.data, name);
+    };
+
+    const switchToSession = (sessionId: string) => {
+      campaign.data.currentSession = sessionId;
+    };
 
     // Debug state
     const showDebug = ref(false);
@@ -238,7 +287,7 @@ export default defineComponent({
     });
 
     // Build the exact prompt Claude would see (single source of truth)
-    const debugPrompt = computed(() => buildPrompt(campaign.data, '(your next message)', campaign.data.gmChat || []));
+    const debugPrompt = computed(() => buildPrompt(campaign.data, '(your next message)', currentSession.value?.chat || []));
     const debugSystemPrompt = computed(() => debugPrompt.value.system.map(b => b.text).join('\n\n---\n\n'));
     const debugGameState = computed(() => {
       const stateBlock = debugPrompt.value.system.find(b => b.text.includes('<game_state>'));
@@ -272,36 +321,31 @@ export default defineComponent({
     const showRewindConfirm = ref(false);
     const rewindTo = (index: number) => {
       rewindTarget.value = index;
-      // Walk backwards from this message to find the nearest snapshot
-      const chat = campaign.data.gmChat || [];
+      const sessionChat = currentSession.value?.chat || [];
       rewindSnapshotId.value = null;
       for (let i = index; i >= 0; i--) {
-        if (chat[i].snapshotId) {
-          rewindSnapshotId.value = chat[i].snapshotId as number;
+        if (sessionChat[i].snapshotId) {
+          rewindSnapshotId.value = sessionChat[i].snapshotId as number;
           break;
         }
       }
       showRewindConfirm.value = true;
     };
     const confirmRewind = async () => {
-      // Grab the message text before we restore
-      const rewoundText = (campaign.data.gmChat || [])[rewindTarget.value]?.content || '';
+      const session = currentSession.value;
+      if (!session) return;
+      const rewoundText = session.chat[rewindTarget.value]?.content || '';
 
       if (rewindSnapshotId.value) {
-        // Full state restore from snapshot
         const restored = await restoreSnapshot(rewindSnapshotId.value);
         if (restored) {
           campaign.data = restored;
           await campaign.save();
         }
       } else {
-        // No snapshot available, fall back to chat truncation only
-        if (!campaign.data.gmChat) return;
-        campaign.data.gmChat.splice(rewindTarget.value);
+        session.chat.splice(rewindTarget.value);
       }
       showRewindConfirm.value = false;
-
-      // Pre-fill the input with the rewound message
       input.value = rewoundText;
     };
 
@@ -344,10 +388,11 @@ export default defineComponent({
         return;
       }
 
-      // Initialize gmChat if needed
-      if (!campaign.data.gmChat) {
-        campaign.data.gmChat = [];
+      // Ensure we have a session
+      if (!currentSession.value) {
+        createSession(campaign.data);
       }
+      const session = currentSession.value as ISession;
 
       // Snapshot before GM turn
       const snapshotId = await createSnapshot(campaign.data, `Before: ${text.substring(0, 50)}`);
@@ -359,7 +404,7 @@ export default defineComponent({
         timestamp: Date.now(),
         snapshotId,
       };
-      campaign.data.gmChat.push(userMsg);
+      session.chat.push(userMsg);
       input.value = '';
       chat.thinking = true;
       chat.streamingText = '';
@@ -368,7 +413,7 @@ export default defineComponent({
       scrollToBottom();
 
       try {
-        const generator = runTurn(apiKey, model, campaign.data, text, campaign.data.gmChat.slice(0, -1), abortController.signal);
+        const generator = runTurn(apiKey, model, campaign.data, text, session.chat.slice(0, -1), abortController.signal);
 
         for await (const event of generator) {
           switch (event.type) {
@@ -405,7 +450,7 @@ export default defineComponent({
           toolCalls: chat.streamToolCalls.length > 0 ? [...chat.streamToolCalls] : undefined,
           timestamp: Date.now(),
         };
-        campaign.data.gmChat.push(assistantMsg);
+        session.chat.push(assistantMsg);
       } catch (err) {
         // Save partial content if we were aborted mid-stream
         if (abortController?.signal.aborted && chat.streamingText.trim()) {
@@ -415,7 +460,7 @@ export default defineComponent({
             toolCalls: chat.streamToolCalls.length > 0 ? [...chat.streamToolCalls] : undefined,
             timestamp: Date.now(),
           };
-          campaign.data.gmChat.push(partialMsg);
+          session.chat.push(partialMsg);
         } else if (!abortController?.signal.aborted) {
           console.error('[GM Agent] Fatal error:', err);
           const errorMsg: IChatMessage = {
@@ -423,7 +468,7 @@ export default defineComponent({
             content: `*An error occurred: ${err instanceof Error ? err.message : 'Unknown error'}*`,
             timestamp: Date.now(),
           };
-          campaign.data.gmChat.push(errorMsg);
+          session.chat.push(errorMsg);
         }
       } finally {
         chat.thinking = false;
@@ -440,6 +485,10 @@ export default defineComponent({
       chat,
       messages,
       messageList,
+      sessions,
+      currentSession,
+      newSession,
+      switchToSession,
       renderedStreaming,
       isFreshCampaign,
       startCampaignSetup,
@@ -469,6 +518,14 @@ export default defineComponent({
   flex-direction: column
   flex: 1
   overflow-x: hidden
+
+.session-bar
+  position: sticky
+  top: 0
+  border-bottom: 1px solid rgba(200, 164, 92, 0.1)
+  background: rgba(12, 14, 24, 0.95)
+  flex-shrink: 0
+  z-index: 10
 
 .message-list
   max-width: 1200px
