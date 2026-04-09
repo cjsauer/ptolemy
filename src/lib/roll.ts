@@ -2,7 +2,9 @@ import { IRollData, EAtO } from 'src/components/models';
 import * as oracle from 'src/lib/oracles';
 
 export const d = (size: number) => {
-  return Math.floor(Math.random() * size) + 1;
+  const arr = new Uint32Array(1);
+  crypto.getRandomValues(arr);
+  return (arr[0] % size) + 1;
 };
 
 export const NewRollData = (): IRollData => {
@@ -87,8 +89,10 @@ export const moveRoll = (attr: number, adds: number, momentum: number, progress?
 };
 
 export const clockRoll = (t: EAtO): { val: number; yn: boolean; match: boolean } => {
-  const n1 = Math.floor(Math.random() * 10);
-  const n2 = Math.floor(Math.random() * 10);
+  const arr = new Uint32Array(2);
+  crypto.getRandomValues(arr);
+  const n1 = arr[0] % 10;
+  const n2 = arr[1] % 10;
   const n = n1 + n2 === 0 ? 100 : n1 === 0 ? n2 : +`${n1}${n2}`;
 
   const YN = oracle.roll(`Starforged/Oracles/Moves/Ask_the_Oracle/${t.replace(/ /g, '_')}`, n) === 'Yes';

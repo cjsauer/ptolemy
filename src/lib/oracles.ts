@@ -99,7 +99,9 @@ export const roll = (id: string, num?: number): string => {
   if (!t || t.length === 0) return 'Could not find oracle';
 
   if (typeof t[0] === 'string') {
-    return t[Math.floor(Math.random() * t.length)] as string;
+    const arr = new Uint32Array(1);
+    crypto.getRandomValues(arr);
+    return t[arr[0] % t.length] as string;
   }
 
   let out = 'No match';
@@ -209,6 +211,8 @@ export const truthOpts = (id: string, subtable: number): ISettingTruthOption[] =
 };
 
 export const star = (): string => {
-  const n = Math.floor(Math.random() * StarNames.length);
+  const arr = new Uint32Array(1);
+  crypto.getRandomValues(arr);
+  const n = arr[0] % StarNames.length;
   return StarNames[n];
 };
