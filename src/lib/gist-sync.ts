@@ -44,10 +44,11 @@ async function writeGistCampaigns(token: string, gistId: string, campaigns: ICam
   if (!resp.ok) throw new Error(`Failed to write gist: ${resp.status} ${resp.statusText}`);
 }
 
-// Overwrite gist with current local DB state (used after deletes)
-export async function pushAll(token: string, gistId: string): Promise<void> {
-  const campaigns = await db.campaign.toArray();
-  await writeGistCampaigns(token, gistId, campaigns);
+// Remove a specific campaign from the gist by ID
+export async function deleteCampaignFromGist(token: string, gistId: string, campaignId: string): Promise<void> {
+  const remote = await fetchGistCampaigns(token, gistId);
+  const filtered = remote.filter((c) => c.id !== campaignId);
+  await writeGistCampaigns(token, gistId, filtered);
 }
 
 // Merge two lists of campaigns. For each campaign ID, keep whichever has the newer lastModified.
