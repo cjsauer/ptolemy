@@ -16,6 +16,17 @@
               <q-item-label>{{ s.name }}</q-item-label>
               <q-item-label caption>{{ new Date(s.createdAt).toLocaleDateString() }} · {{ s.chat.length }} messages</q-item-label>
             </q-item-section>
+            <q-item-section side>
+              <q-btn
+                flat
+                dense
+                round
+                icon="delete"
+                size="xs"
+                color="grey-7"
+                @click.stop="confirmDeleteSession(s.id, s.name)"
+              />
+            </q-item-section>
           </q-item>
           <q-separator />
           <q-item clickable v-close-popup @click="newSession()">
@@ -140,6 +151,20 @@
         <q-card-actions align="right">
           <q-btn flat label="Cancel" @click="showRewindConfirm = false" />
           <q-btn flat label="Rewind" color="warning" @click="confirmRewind" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <!-- Delete session confirm -->
+    <q-dialog v-model="showDeleteSession">
+      <q-card class="card-bg" style="min-width: 320px">
+        <q-card-section class="bg-secondary sf-header text-h6">Delete Session</q-card-section>
+        <q-card-section>
+          Delete "{{ deleteSessionName }}"? This will remove all messages in this session. Game state is not affected.
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Cancel" @click="showDeleteSession = false" />
+          <q-btn flat label="Delete" color="negative" @click="doDeleteSession" />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -315,6 +340,28 @@ export default defineComponent({
       const hasAssets = campaign.data.character.assets.length > 0;
       return !hasStats && !hasAssets;
     });
+
+    // Session deletion
+    const showDeleteSession = ref(false);
+    const deleteSessionId = ref('');
+    const deleteSessionName = ref('');
+    const confirmDeleteSession = (id: string, name: string) => {
+      deleteSessionId.value = id;
+      deleteSessionName.value = name;
+      showDeleteSession.value = true;
+    };
+    const doDeleteSession = () => {
+      if (!campaign.data.sessions) return;
+      const idx = campaign.data.sessions.findIndex((s) => s.id === deleteSessionId.value);
+      if (idx < 0) return;
+      campaign.data.sessions.splice(idx, 1);
+      // If we deleted the current session, switch to the last one or clear
+      if (campaign.data.currentSession === deleteSessionId.value) {
+        const last = campaign.data.sessions[campaign.data.sessions.length - 1];
+        campaign.data.currentSession = last?.id;
+      }
+      showDeleteSession.value = false;
+    };
 
     const rewindTarget = ref(-1);
     const rewindSnapshotId = ref<number | null>(null);
@@ -498,6 +545,10 @@ export default defineComponent({
       showRewindConfirm,
       confirmRewind,
       rewindSnapshotId,
+      showDeleteSession,
+      deleteSessionName,
+      confirmDeleteSession,
+      doDeleteSession,
       send,
       showDebug,
       debugTab,
@@ -520,12 +571,13 @@ export default defineComponent({
   overflow-x: hidden
 
 .session-bar
-  position: sticky
-  top: 0
+  position: fixed
+  top: 86px
+  left: 0
+  right: 0
   border-bottom: 1px solid rgba(200, 164, 92, 0.1)
   background: rgba(12, 14, 24, 0.95)
-  flex-shrink: 0
-  z-index: 10
+  z-index: 100
 
 .message-list
   max-width: 1200px
@@ -534,6 +586,7 @@ export default defineComponent({
   overflow-x: hidden
   overflow-wrap: break-word
   word-break: break-word
+  padding-top: 40px
 
 .input-bar
   position: sticky
