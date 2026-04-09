@@ -343,6 +343,7 @@ export interface ICampaign {
   sectors: ISector[];
   factions: IFaction[];
   gmChat?: IChatMessage[];
+  lastModified?: number;
 }
 
 // NPCs

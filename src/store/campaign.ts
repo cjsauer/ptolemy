@@ -155,6 +155,7 @@ export const useCampaign = defineStore({
 
     async save() {
       const storeCopy = JSON.parse(JSON.stringify(this.data)) as ICampaign;
+      storeCopy.lastModified = Date.now();
       await db.campaign.update(this.data.id, storeCopy).catch((err) => console.log(err));
 
       const config = useConfig();

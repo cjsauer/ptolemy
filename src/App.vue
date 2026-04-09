@@ -11,6 +11,7 @@ import { useOracles } from './store/oracles';
 
 import { debounce, useQuasar } from 'quasar';
 import { sleep } from './lib/util';
+import { sync, createGist } from './lib/gist-sync';
 
 export default defineComponent({
   name: 'App',
@@ -22,6 +23,22 @@ export default defineComponent({
 
     const campaign = useCampaign();
 
+    const config = useConfig();
+
+    const gistSync = async () => {
+      const token = config.data.githubToken;
+      if (!token) return;
+      try {
+        if (!config.data.gistId) {
+          config.data.gistId = await createGist(token);
+        } else {
+          await sync(token, config.data.gistId);
+        }
+      } catch (err) {
+        console.log('[Gist sync]', err);
+      }
+    };
+
     const initialiseData = async () => {
       const assets = useAssets();
       const oracles = useOracles();
@@ -29,14 +46,18 @@ export default defineComponent({
       await campaign.populateStore().catch((err) => console.log(err));
       await assets.populateStore().catch((err) => console.log(err));
       await oracles.populateStore().catch((err) => console.log(err));
+
+      // Pull from gist on startup (merges remote changes)
+      if (config.data.githubToken && config.data.gistId) {
+        await gistSync();
+        await campaign.load(config.data.current);
+      }
     };
 
     onMounted(async () => {
       await initialiseData();
       loaded.value = true;
     });
-
-    const config = useConfig();
 
     watch(
       () => config.$state,
@@ -58,6 +79,8 @@ export default defineComponent({
       debounce(async () => {
         config.data.saving = true;
         await campaign.save();
+        // Background gist sync — fire and forget
+        gistSync().catch(() => { /* silent */ });
         await sleep(200);
         config.data.saving = false;
       }, 1000),

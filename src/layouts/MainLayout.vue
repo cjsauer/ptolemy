@@ -464,21 +464,12 @@
 
         <q-card-actions v-if="config.data.githubToken" align="center" class="q-pb-md">
           <q-btn
-            label="Push"
-            icon="mdi-cloud-upload"
+            label="Sync"
+            icon="mdi-cloud-sync"
             color="primary"
             flat
             :loading="syncing"
-            @click="pushSync"
-          />
-          <q-btn
-            label="Pull"
-            icon="mdi-cloud-download"
-            color="primary"
-            flat
-            :loading="syncing"
-            :disable="!config.data.gistId"
-            @click="pullSync"
+            @click="doSync"
           />
         </q-card-actions>
 
@@ -502,7 +493,7 @@ import { useConfig } from 'src/store/config';
 import { useAssets } from 'src/store/assets';
 import { useQuasar, scroll } from 'quasar';
 import Anthropic from '@anthropic-ai/sdk';
-import { createGist, pushToGist, syncFromGist } from 'src/lib/gist-sync';
+import { createGist, sync } from 'src/lib/gist-sync';
 
 import Oracles from 'src/components/Oracles/Oracles.vue';
 import Moves from 'src/components/Moves/Moves.vue';
@@ -597,36 +588,23 @@ export default defineComponent({
     const syncing = ref(false);
     const syncResult = ref<{ success: boolean; message: string } | null>(null);
 
-    const pushSync = async () => {
+    const doSync = async () => {
       syncing.value = true;
       syncResult.value = null;
       try {
         const token = config.data.githubToken || '';
         if (!config.data.gistId) {
-          // Create a new gist
           config.data.gistId = await createGist(token);
-          syncResult.value = { success: true, message: `Created gist and pushed. ID: ${config.data.gistId}` };
+          syncResult.value = { success: true, message: `Created gist. ID: ${config.data.gistId}` };
         } else {
-          await pushToGist(token, config.data.gistId);
-          syncResult.value = { success: true, message: 'Pushed to gist.' };
+          const result = await sync(token, config.data.gistId);
+          const parts = [];
+          if (result.added > 0) parts.push(`${result.added} new`);
+          if (result.localWins > 0) parts.push(`${result.localWins} kept local`);
+          if (result.remoteWins > 0) parts.push(`${result.remoteWins} updated from remote`);
+          syncResult.value = { success: true, message: `Synced ${result.total} campaign(s). ${parts.join(', ')}.` };
+          await campaign.populateStore();
         }
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Unknown error';
-        syncResult.value = { success: false, message };
-      } finally {
-        syncing.value = false;
-      }
-    };
-
-    const pullSync = async () => {
-      syncing.value = true;
-      syncResult.value = null;
-      try {
-        const token = config.data.githubToken || '';
-        const count = await syncFromGist(token, config.data.gistId || '');
-        syncResult.value = { success: true, message: `Pulled ${count} campaign(s). Reloading...` };
-        // Reload the current campaign from DB
-        await campaign.populateStore();
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Unknown error';
         syncResult.value = { success: false, message };
@@ -697,8 +675,7 @@ export default defineComponent({
       scrollTo,
       syncing,
       syncResult,
-      pushSync,
-      pullSync,
+      doSync,
     };
   },
 });

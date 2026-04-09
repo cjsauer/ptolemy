@@ -18,6 +18,72 @@ function headers(token: string): Record<string, string> {
   };
 }
 
+async function fetchGistCampaigns(token: string, gistId: string): Promise<ICampaign[]> {
+  const resp = await fetch(`${GIST_API}/${gistId}`, {
+    headers: headers(token),
+  });
+  if (!resp.ok) throw new Error(`Failed to fetch gist: ${resp.status} ${resp.statusText}`);
+  const data = (await resp.json()) as GistResponse;
+  const file = data.files[GIST_FILENAME];
+  if (!file) return [];
+  return JSON.parse(file.content) as ICampaign[];
+}
+
+async function writeGistCampaigns(token: string, gistId: string, campaigns: ICampaign[]): Promise<void> {
+  const resp = await fetch(`${GIST_API}/${gistId}`, {
+    method: 'PATCH',
+    headers: headers(token),
+    body: JSON.stringify({
+      files: {
+        [GIST_FILENAME]: {
+          content: JSON.stringify(campaigns, null, 2),
+        },
+      },
+    }),
+  });
+  if (!resp.ok) throw new Error(`Failed to write gist: ${resp.status} ${resp.statusText}`);
+}
+
+// Merge two lists of campaigns. For each campaign ID, keep whichever has the newer lastModified.
+// Campaigns that exist only on one side are included as-is.
+function mergeCampaigns(local: ICampaign[], remote: ICampaign[]): { merged: ICampaign[]; localWins: number; remoteWins: number; added: number } {
+  const remoteMap = new Map(remote.map((c) => [c.id, c]));
+  const mergedMap = new Map<string, ICampaign>();
+  let localWins = 0;
+  let remoteWins = 0;
+  let added = 0;
+
+  // Process local campaigns
+  for (const lc of local) {
+    const rc = remoteMap.get(lc.id);
+    if (!rc) {
+      // Local only
+      mergedMap.set(lc.id, lc);
+      added++;
+    } else {
+      // Both exist — newer wins
+      const localTime = lc.lastModified || 0;
+      const remoteTime = rc.lastModified || 0;
+      if (localTime >= remoteTime) {
+        mergedMap.set(lc.id, lc);
+        localWins++;
+      } else {
+        mergedMap.set(lc.id, rc);
+        remoteWins++;
+      }
+      remoteMap.delete(lc.id);
+    }
+  }
+
+  // Remaining remote-only campaigns
+  for (const [id, rc] of remoteMap) {
+    mergedMap.set(id, rc);
+    added++;
+  }
+
+  return { merged: Array.from(mergedMap.values()), localWins, remoteWins, added };
+}
+
 export async function createGist(token: string): Promise<string> {
   const campaigns = await db.campaign.toArray();
   const resp = await fetch(GIST_API, {
@@ -38,45 +104,24 @@ export async function createGist(token: string): Promise<string> {
   return data.id;
 }
 
-export async function pushToGist(token: string, gistId: string): Promise<void> {
-  const campaigns = await db.campaign.toArray();
-  const resp = await fetch(`${GIST_API}/${gistId}`, {
-    method: 'PATCH',
-    headers: headers(token),
-    body: JSON.stringify({
-      files: {
-        [GIST_FILENAME]: {
-          content: JSON.stringify(campaigns, null, 2),
-        },
-      },
-    }),
-  });
-  if (!resp.ok) throw new Error(`Failed to push to gist: ${resp.status} ${resp.statusText}`);
+export interface SyncResult {
+  localWins: number;
+  remoteWins: number;
+  added: number;
+  total: number;
 }
 
-export async function pullFromGist(token: string, gistId: string): Promise<ICampaign[]> {
-  const resp = await fetch(`${GIST_API}/${gistId}`, {
-    headers: headers(token),
-  });
-  if (!resp.ok) throw new Error(`Failed to pull from gist: ${resp.status} ${resp.statusText}`);
-  const data = (await resp.json()) as GistResponse;
-  const file = data.files[GIST_FILENAME];
-  if (!file) throw new Error(`Gist does not contain ${GIST_FILENAME}`);
-  return JSON.parse(file.content) as ICampaign[];
-}
+// Full bidirectional sync: merge local + remote by newer-wins, write merged result to both gist and local DB.
+export async function sync(token: string, gistId: string): Promise<SyncResult> {
+  const local = await db.campaign.toArray();
+  const remote = await fetchGistCampaigns(token, gistId);
+  const { merged, localWins, remoteWins, added } = mergeCampaigns(local, remote);
 
-export async function syncFromGist(token: string, gistId: string): Promise<number> {
-  const campaigns = await pullFromGist(token, gistId);
-  await db.campaign.bulkPut(campaigns);
-  return campaigns.length;
-}
+  // Write merged result to gist
+  await writeGistCampaigns(token, gistId, merged);
 
-export async function getGistMeta(token: string, gistId: string): Promise<{ updatedAt: string }> {
-  const resp = await fetch(`${GIST_API}/${gistId}`, {
-    method: 'GET',
-    headers: headers(token),
-  });
-  if (!resp.ok) throw new Error(`Failed to fetch gist: ${resp.status} ${resp.statusText}`);
-  const data = (await resp.json()) as GistResponse;
-  return { updatedAt: data.updated_at };
+  // Write merged result to local DB
+  await db.campaign.bulkPut(merged);
+
+  return { localWins, remoteWins, added, total: merged.length };
 }
