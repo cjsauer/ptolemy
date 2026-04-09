@@ -5,7 +5,7 @@
         <q-btn dense flat icon="menu" @click="toggleLeftDrawer" />
 
         <q-toolbar-title class="sf-header text-h6">
-          IRON JOURNAL <span class="title-pipe">|</span> STARFORGED
+          {{ campaign.data.name || 'Untitled Campaign' }}
         </q-toolbar-title>
 
         <q-btn v-if="config.data.saving" icon="save" flat dense disable />
