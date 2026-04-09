@@ -532,6 +532,40 @@ export function addCreature(
   return { name: creature.name };
 }
 
+export function updateSectorObject(
+  campaign: ICampaign,
+  objectType: 'planet' | 'settlement' | 'starship' | 'derelict' | 'creature',
+  name: string,
+  changes: Record<string, unknown>
+): { name: string; applied: Record<string, unknown> } {
+  const typeToKey = {
+    planet: 'planets',
+    settlement: 'settlements',
+    starship: 'ships',
+    derelict: 'derelicts',
+    creature: 'creatures',
+  } as const;
+  const key = typeToKey[objectType];
+
+  for (const sector of campaign.sectors) {
+    for (const cell of Object.values(sector.cells)) {
+      const arr = cell[key] as unknown as Record<string, unknown>[];
+      const obj = arr.find((o) => (o.name as string || '').toLowerCase() === name.toLowerCase());
+      if (obj) {
+        const applied: Record<string, unknown> = {};
+        for (const [k, v] of Object.entries(changes)) {
+          if (v !== undefined && k !== 'name') {
+            obj[k] = v;
+            applied[k] = v;
+          }
+        }
+        return { name: obj.name as string, applied };
+      }
+    }
+  }
+  throw new Error(`${objectType} not found: "${name}"`);
+}
+
 export function lookupMove(_campaign: ICampaign, moveId: string): { name: string; text: string; oracles?: string[] } {
   // Search dataforged moves
   for (const category of starforged['Move Categories']) {

@@ -532,6 +532,19 @@ Common oracle IDs:
       required: [],
     },
   },
+  {
+    name: 'update_sector_object',
+    description: 'Update fields on an existing planet, settlement, starship, derelict, or creature by name. Use this instead of add_ when the object already exists. Searches all sectors.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        object_type: { type: 'string', enum: ['planet', 'settlement', 'starship', 'derelict', 'creature'], description: 'Type of object to update' },
+        name: { type: 'string', description: 'Name of the object to find' },
+        changes: { type: 'object', description: 'Fields to update, e.g. {"atmosphere": "Toxic", "notes": "Volcanic activity"}', additionalProperties: true },
+      },
+      required: ['object_type', 'name', 'changes'],
+    },
+  },
 ];
 
 // --- Tool executor ---
@@ -608,6 +621,8 @@ function executeTool(name: string, input: Record<string, unknown>, campaign: ICa
       return tools.burnMomentum(campaign);
     case 'get_campaign_setup_guide':
       return tools.getCampaignSetupGuide();
+    case 'update_sector_object':
+      return tools.updateSectorObject(campaign, input.object_type as 'planet' | 'settlement' | 'starship' | 'derelict' | 'creature', input.name as string, input.changes as Record<string, unknown>);
     default:
       throw new Error(`Unknown tool: ${name}`);
   }
