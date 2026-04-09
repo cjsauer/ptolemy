@@ -68,6 +68,8 @@ export interface IConfig {
   journalTab?: boolean;
   claudeApiKey?: string;
   claudeModel?: string;
+  githubToken?: string;
+  gistId?: string;
   map: {
     height: number;
     width: number;
