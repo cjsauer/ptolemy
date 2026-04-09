@@ -83,7 +83,7 @@ export default defineComponent({
         gistSync().catch(() => { /* silent */ });
         await sleep(200);
         config.data.saving = false;
-      }, 1000),
+      }, 3000),
       { deep: true }
     );
 
