@@ -97,7 +97,7 @@
         <q-tooltip>Debug panel</q-tooltip>
       </q-btn>
       <q-input
-        v-model="input"
+        v-model="chat.inputText"
         placeholder="What do you do?"
         outlined
         dense
@@ -115,7 +115,7 @@
             flat
             icon="send"
             color="primary"
-            :disable="!input.trim()"
+            :disable="!chat.inputText.trim()"
             @click="send"
           />
           <q-btn
@@ -274,7 +274,6 @@ export default defineComponent({
     const config = useConfig();
     const chat = useChat();
 
-    const input = ref('');
     const messageList = ref<HTMLElement | null>(null);
     let abortController: AbortController | null = null;
 
@@ -393,7 +392,7 @@ export default defineComponent({
         session.chat.splice(rewindTarget.value);
       }
       showRewindConfirm.value = false;
-      input.value = rewoundText;
+      chat.inputText = rewoundText;
     };
 
     const stop = () => {
@@ -403,7 +402,7 @@ export default defineComponent({
     };
 
     const startCampaignSetup = () => {
-      input.value = "Let's set up a new campaign! Walk me through the Starforged Chapter 2 procedure.";
+      chat.inputText = "Let's set up a new campaign! Walk me through the Starforged Chapter 2 procedure.";
       void send();
     };
 
@@ -428,7 +427,7 @@ export default defineComponent({
     onMounted(scrollToBottom);
 
     const send = async () => {
-      const text = input.value.trim();
+      const text = chat.inputText.trim();
       if (!text || chat.thinking) return;
 
       const apiKey = config.data.claudeApiKey;
@@ -456,7 +455,7 @@ export default defineComponent({
         snapshotId,
       };
       session.chat.push(userMsg);
-      input.value = '';
+      chat.inputText = '';
       chat.thinking = true;
       chat.streamingText = '';
       chat.streamToolCalls = [];
@@ -532,7 +531,6 @@ export default defineComponent({
     };
 
     return {
-      input,
       chat,
       messages,
       messageList,

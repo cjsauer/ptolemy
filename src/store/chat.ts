@@ -13,6 +13,7 @@ export const useChat = defineStore({
       streamToolCalls: [] as IChatToolCall[],
       lastUsage: null as TokenUsage | null,
       usageHistory: [] as TokenUsage[],
+      inputText: '',
     };
   },
 });
