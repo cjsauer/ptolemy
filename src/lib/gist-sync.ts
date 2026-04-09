@@ -44,6 +44,12 @@ async function writeGistCampaigns(token: string, gistId: string, campaigns: ICam
   if (!resp.ok) throw new Error(`Failed to write gist: ${resp.status} ${resp.statusText}`);
 }
 
+// Overwrite gist with current local DB state (used after deletes)
+export async function pushAll(token: string, gistId: string): Promise<void> {
+  const campaigns = await db.campaign.toArray();
+  await writeGistCampaigns(token, gistId, campaigns);
+}
+
 // Merge two lists of campaigns. For each campaign ID, keep whichever has the newer lastModified.
 // Campaigns that exist only on one side are included as-is.
 function mergeCampaigns(local: ICampaign[], remote: ICampaign[]): { merged: ICampaign[]; localWins: number; remoteWins: number; added: number } {
