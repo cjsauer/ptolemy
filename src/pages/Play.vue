@@ -18,4 +18,8 @@ export default defineComponent({
 .q-page
   display: flex
   flex-direction: column
+  height: calc(100vh - 87px) !important
+  min-height: 0 !important
+  max-height: calc(100vh - 87px) !important
+  overflow: hidden
 </style>

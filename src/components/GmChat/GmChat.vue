@@ -414,7 +414,11 @@ export default defineComponent({
     const scrollToBottom = () => {
       void nextTick(() => {
         requestAnimationFrame(() => {
-          window.scrollTo(0, document.documentElement.scrollHeight);
+          requestAnimationFrame(() => {
+            if (messageList.value) {
+              messageList.value.scrollTop = messageList.value.scrollHeight;
+            }
+          });
         });
       });
     };
@@ -571,32 +575,28 @@ export default defineComponent({
   overflow-x: hidden
 
 .session-bar
-  position: fixed
-  top: 86px
-  left: 0
-  right: 0
+  flex-shrink: 0
   border-bottom: 1px solid rgba(200, 164, 92, 0.1)
   background: rgba(12, 14, 24, 0.95)
-  z-index: 100
 
 .message-list
   max-width: 1200px
   margin: 0 auto
   width: 100%
   overflow-x: hidden
+  overflow-y: auto
   overflow-wrap: break-word
   word-break: break-word
-  padding-top: 40px
+  flex: 1
+  min-height: 0
 
 .input-bar
-  position: sticky
-  bottom: 0
+  flex-shrink: 0
   border-top: 1px solid rgba(200, 164, 92, 0.12)
   background: rgba(12, 14, 24, 0.95)
   max-width: 1200px
   margin: 0 auto
   width: 100%
-  z-index: 10
 
 .streaming-body
   background: rgba(20, 25, 42, 0.9)
