@@ -14,12 +14,11 @@ export async function generateImage(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'dall-e-3',
+      model: 'gpt-image-1',
       prompt: fullPrompt,
       n: 1,
-      size: '1024x1024',
-      quality: 'standard',
-      response_format: 'b64_json',
+      size: '512x512',
+      quality: 'low',
     }),
   });
 
@@ -30,11 +29,11 @@ export async function generateImage(
   }
 
   const data = (await resp.json()) as {
-    data: { b64_json: string; revised_prompt: string }[];
+    data: { b64_json: string; revised_prompt?: string }[];
   };
 
   const img = data.data[0];
   const dataUrl = `data:image/png;base64,${img.b64_json}`;
 
-  return { url: dataUrl, revisedPrompt: img.revised_prompt };
+  return { url: dataUrl, revisedPrompt: img.revised_prompt || fullPrompt };
 }

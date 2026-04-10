@@ -862,10 +862,12 @@ export async function* runTurn(
           try {
             const result = await executeTool(tool.name, tool.input, campaign, toolContext);
             yield { type: 'tool_result', name: tool.name, result };
+            // Strip image data from tool results sent back to Claude
+            const resultForClaude = stripDataUrls(JSON.stringify(result));
             toolResults.push({
               type: 'tool_result',
               tool_use_id: tool.id,
-              content: JSON.stringify(result),
+              content: resultForClaude,
             });
           } catch (err) {
             const errorMsg = err instanceof Error ? err.message : 'Unknown error';
