@@ -17,7 +17,6 @@ import { useConfig } from './config';
 import { exportFile } from 'quasar';
 import { db } from 'src/lib/db';
 import { now } from 'src/lib/util';
-import { deleteCampaignFromGist } from 'src/lib/gist-sync';
 
 export const useCampaign = defineStore({
   id: 'campaign',
@@ -212,11 +211,6 @@ export const useCampaign = defineStore({
         }
 
         await config.updateIndex();
-
-        // Remove this campaign from the gist too
-        if (config.data.githubToken && config.data.gistId) {
-          deleteCampaignFromGist(config.data.githubToken, config.data.gistId, id).catch(() => { /* silent */ });
-        }
       } catch (err) {
         console.log(err);
       }

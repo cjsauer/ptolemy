@@ -1,6 +1,5 @@
 import { ICampaign, IProgressTrack, EAtO, INPC, IFaction, ERegion, ISGAsset, IPlanet, ISettlement, IStarship, IDerelict, ICreature, IStats, IRollData, ECellStatus } from 'src/components/models';
 import { moveRoll } from 'src/lib/roll';
-import { generateImage } from 'src/lib/image-gen';
 import * as oracle from 'src/lib/oracles';
 import { Difficulty, NewProgressTrack, NewClock } from 'src/lib/tracks';
 import { NewNPC, NewCell, NewPlanet, NewSettlement, NewShip, NewDerelict, NewCreature, NewSector } from 'src/lib/sector';
@@ -889,12 +888,3 @@ Give the vow a troublesome or dangerous rank for this first quest. Write via cre
 The adventure begins!` };
 }
 
-export async function generateSceneImage(
-  openaiApiKey: string,
-  prompt: string,
-  campaign: ICampaign
-): Promise<{ imageUrl: string; revisedPrompt: string }> {
-  if (!openaiApiKey) throw new Error('OpenAI API key not configured. Set it in Claude GM Settings.');
-  const result = await generateImage(openaiApiKey, prompt, campaign.imageStyle);
-  return { imageUrl: result.url, revisedPrompt: result.revisedPrompt };
-}

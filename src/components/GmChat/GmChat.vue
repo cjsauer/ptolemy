@@ -463,7 +463,7 @@ export default defineComponent({
       scrollToBottom();
 
       try {
-        const generator = runTurn(apiKey, model, campaign.data, text, session.chat.slice(0, -1), abortController.signal, { openaiApiKey: config.data.openaiApiKey });
+        const generator = runTurn(apiKey, model, campaign.data, text, session.chat.slice(0, -1), abortController.signal);
 
         for await (const event of generator) {
           switch (event.type) {

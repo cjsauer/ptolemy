@@ -570,26 +570,12 @@ Common oracle IDs:
       required: ['object_type', 'name', 'changes'],
     },
   },
-  {
-    name: 'generate_image',
-    description: 'Generate an image using DALL-E. Use this to illustrate scenes, characters, locations, or dramatic moments. The campaign\'s image style is automatically prepended. Returns a data URL that can be embedded in journal entries or chat.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        prompt: { type: 'string', description: 'Detailed visual description of the image to generate. Be specific about composition, lighting, mood, and subject.' },
-      },
-      required: ['prompt'],
-    },
-  },
 ];
 
 // --- Tool executor ---
 
-interface ToolContext {
-  openaiApiKey?: string;
-}
-
-async function executeTool(name: string, input: Record<string, unknown>, campaign: ICampaign, ctx?: ToolContext): Promise<unknown> {
+// eslint-disable-next-line @typescript-eslint/require-await
+async function executeTool(name: string, input: Record<string, unknown>, campaign: ICampaign): Promise<unknown> {
   switch (name) {
     case 'get_game_state':
       return tools.getGameState(campaign);
@@ -667,8 +653,6 @@ async function executeTool(name: string, input: Record<string, unknown>, campaig
       return tools.getCampaignSetupGuide();
     case 'update_sector_object':
       return tools.updateSectorObject(campaign, input.object_type as 'planet' | 'settlement' | 'starship' | 'derelict' | 'creature', input.name as string, input.changes as Record<string, unknown>);
-    case 'generate_image':
-      return tools.generateSceneImage(ctx?.openaiApiKey || '', input.prompt as string, campaign);
     default:
       throw new Error(`Unknown tool: ${name}`);
   }
@@ -776,7 +760,6 @@ export async function* runTurn(
   playerAction: string,
   chatHistory: IChatMessage[],
   abortSignal?: AbortSignal,
-  toolContext?: ToolContext
 ): AsyncGenerator<AgentEvent> {
   const client = new Anthropic({
     apiKey,
@@ -860,7 +843,7 @@ export async function* runTurn(
         const toolResults: Anthropic.ToolResultBlockParam[] = [];
         for (const tool of toolUses) {
           try {
-            const result = await executeTool(tool.name, tool.input, campaign, toolContext);
+            const result = await executeTool(tool.name, tool.input, campaign);
             yield { type: 'tool_result', name: tool.name, result };
             // Strip image data from tool results sent back to Claude
             const resultForClaude = stripDataUrls(JSON.stringify(result));

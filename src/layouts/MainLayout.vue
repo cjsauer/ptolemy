@@ -429,89 +429,6 @@
           </q-banner>
         </q-card-section>
 
-        <q-separator class="q-my-sm" />
-
-        <q-card-section class="sf-header text-h6">Image Generation</q-card-section>
-
-        <q-card-section>
-          <q-input
-            v-model="config.data.openaiApiKey"
-            label="OpenAI API Key"
-            type="password"
-            standout="bg-blue-grey text-white"
-            :input-style="{ color: '#ECEFF4' }"
-            hint="For DALL-E image generation. Optional."
-          >
-            <template v-slot:prepend>
-              <q-icon name="key" />
-            </template>
-          </q-input>
-        </q-card-section>
-
-        <q-card-section v-if="config.data.openaiApiKey">
-          <q-input
-            v-model="campaign.data.imageStyle"
-            label="Image Style (per campaign)"
-            standout="bg-blue-grey text-white"
-            :input-style="{ color: '#ECEFF4' }"
-            autogrow
-            hint="Prepended to every image prompt. e.g. 'Dark sci-fi illustration, muted colors, dramatic lighting, concept art style'"
-          >
-            <template v-slot:prepend>
-              <q-icon name="palette" />
-            </template>
-          </q-input>
-        </q-card-section>
-
-        <q-separator class="q-my-sm" />
-
-        <q-card-section class="sf-header text-h6">Campaign Sync</q-card-section>
-
-        <q-card-section>
-          <q-input
-            v-model="config.data.githubToken"
-            label="GitHub Personal Access Token"
-            type="password"
-            standout="bg-blue-grey text-white"
-            :input-style="{ color: '#ECEFF4' }"
-            hint="Create a classic token at github.com/settings/tokens/new with only the 'gist' scope checked."
-          >
-            <template v-slot:prepend>
-              <q-icon name="mdi-github" />
-            </template>
-          </q-input>
-        </q-card-section>
-
-        <q-card-section v-if="config.data.githubToken">
-          <q-input
-            v-model="config.data.gistId"
-            label="Gist ID (leave empty to create new)"
-            standout="bg-blue-grey text-white"
-            :input-style="{ color: '#ECEFF4' }"
-            hint="The ID from an existing sync gist, or leave blank to create one on first push."
-          >
-            <template v-slot:prepend>
-              <q-icon name="mdi-cloud-sync" />
-            </template>
-          </q-input>
-        </q-card-section>
-
-        <q-card-actions v-if="config.data.githubToken" align="center" class="q-pb-md">
-          <q-btn
-            label="Sync"
-            icon="mdi-cloud-sync"
-            color="primary"
-            flat
-            :loading="syncing"
-            @click="doSync"
-          />
-        </q-card-actions>
-
-        <q-card-section v-if="syncResult" class="q-pt-none">
-          <q-banner :class="syncResult.success ? 'bg-positive' : 'bg-negative'" class="text-white" rounded>
-            {{ syncResult.message }}
-          </q-banner>
-        </q-card-section>
       </q-card>
     </q-dialog>
 
@@ -527,8 +444,6 @@ import { useConfig } from 'src/store/config';
 import { useAssets } from 'src/store/assets';
 import { useQuasar, scroll } from 'quasar';
 import Anthropic from '@anthropic-ai/sdk';
-import { createGist, sync } from 'src/lib/gist-sync';
-
 import Oracles from 'src/components/Oracles/Oracles.vue';
 import Moves from 'src/components/Moves/Moves.vue';
 import Roller from 'src/components/Widgets/Roller.vue';
@@ -618,35 +533,6 @@ export default defineComponent({
         testingApi.value = false;
       }
     };
-    // Gist sync
-    const syncing = ref(false);
-    const syncResult = ref<{ success: boolean; message: string } | null>(null);
-
-    const doSync = async () => {
-      syncing.value = true;
-      syncResult.value = null;
-      try {
-        const token = config.data.githubToken || '';
-        if (!config.data.gistId) {
-          config.data.gistId = await createGist(token);
-          syncResult.value = { success: true, message: `Created gist. ID: ${config.data.gistId}` };
-        } else {
-          const result = await sync(token, config.data.gistId);
-          const parts = [];
-          if (result.added > 0) parts.push(`${result.added} new`);
-          if (result.localWins > 0) parts.push(`${result.localWins} kept local`);
-          if (result.remoteWins > 0) parts.push(`${result.remoteWins} updated from remote`);
-          syncResult.value = { success: true, message: `Synced ${result.total} campaign(s). ${parts.join(', ')}.` };
-          await campaign.populateStore();
-        }
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Unknown error';
-        syncResult.value = { success: false, message };
-      } finally {
-        syncing.value = false;
-      }
-    };
-
     const crt = computed((): boolean => {
       return /bebop/i.test(campaign.data.sectors[config.data.sector].name);
     });
@@ -707,9 +593,6 @@ export default defineComponent({
       btnSize,
       crt,
       scrollTo,
-      syncing,
-      syncResult,
-      doSync,
     };
   },
 });

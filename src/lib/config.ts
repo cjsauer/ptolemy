@@ -10,9 +10,6 @@ export function NewConfig(): IConfig {
     saving: false,
     claudeApiKey: '',
     claudeModel: 'claude-opus-4-6',
-    openaiApiKey: '',
-    githubToken: '',
-    gistId: '',
     map: {
       height: 400,
       width: 800,
