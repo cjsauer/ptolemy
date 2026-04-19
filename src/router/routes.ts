@@ -32,6 +32,12 @@ const routes: RouteRecordRaw[] = [
   },
 
   {
+    path: '/world',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [{ path: '', component: () => import('src/pages/WorldTick.vue') }],
+  },
+
+  {
     path: '/challenges',
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/Challenges.vue') }],

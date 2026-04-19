@@ -88,18 +88,6 @@
         round
         dense
         flat
-        icon="mdi-clock-fast"
-        size="sm"
-        color="grey"
-        class="q-mr-xs"
-        @click="showTickDialog = true"
-      >
-        <q-tooltip>World Tick</q-tooltip>
-      </q-btn>
-      <q-btn
-        round
-        dense
-        flat
         icon="mdi-bug"
         size="sm"
         color="grey"
@@ -177,71 +165,6 @@
         <q-card-actions align="right">
           <q-btn flat label="Cancel" @click="showDeleteSession = false" />
           <q-btn flat label="Delete" color="negative" @click="doDeleteSession" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
-
-    <!-- World Tick dialog -->
-    <q-dialog v-model="showTickDialog" :maximized="false">
-      <q-card class="card-bg" style="min-width: 500px; max-width: 700px; max-height: 80vh">
-        <q-card-section class="row items-center bg-secondary q-py-sm">
-          <div class="sf-header text-h6 col">World Tick</div>
-          <q-btn flat dense icon="close" @click="showTickDialog = false" />
-        </q-card-section>
-
-        <q-card-section v-if="tickResults.length === 0 && !tickRunning">
-          <div class="text-caption q-mb-md">
-            Ask every entity in the world: "What do you intend to do?" Results are not resolved — that's your job as the GM.
-          </div>
-          <q-select
-            v-model="tickDt"
-            :options="['the next few hours', 'the next day', 'the next few days', 'the next week', 'the next month']"
-            label="Time period"
-            outlined
-            dense
-            dark
-          />
-        </q-card-section>
-
-        <q-card-actions v-if="tickResults.length === 0 && !tickRunning" align="center">
-          <q-btn
-            label="Run Tick"
-            icon="mdi-play"
-            color="primary"
-            flat
-            @click="runTick"
-          />
-        </q-card-actions>
-
-        <!-- Progress bar -->
-        <q-card-section v-if="tickRunning" class="q-py-sm">
-          <div class="row items-center q-mb-xs">
-            <span class="text-caption text-grey col">{{ tickCompleted }} / {{ tickTotal }} entities</span>
-          </div>
-          <q-linear-progress :value="tickTotal > 0 ? tickCompleted / tickTotal : 0" color="primary" class="q-mb-xs" />
-        </q-card-section>
-
-        <!-- Results (stream in as they arrive) -->
-        <q-card-section v-if="tickResults.length > 0" style="max-height: 60vh; overflow-y: auto">
-          <div v-for="(intent, i) in tickResults" :key="i" class="tick-intent q-mb-md">
-            <div class="row items-center q-mb-xs">
-              <q-badge :color="intentBadgeColor(intent.agent.type)" class="q-mr-sm">{{ intent.agent.type }}</q-badge>
-              <span class="text-bold">{{ intent.agent.name }}</span>
-              <q-btn flat dense round icon="mdi-bug" size="xs" color="grey-7" class="q-ml-xs" @click="tickDebugIndex = tickDebugIndex === i ? -1 : i">
-                <q-tooltip>Show prompt</q-tooltip>
-              </q-btn>
-            </div>
-            <div class="tick-intent-text">{{ intent.intent }}</div>
-            <div v-if="intent.targets.length > 0" class="text-caption text-grey q-mt-xs">
-              Involves: {{ intent.targets.join(', ') }}
-            </div>
-            <pre v-if="tickDebugIndex === i" class="tick-debug-pre q-mt-sm">{{ intent.systemPrompt }}</pre>
-          </div>
-        </q-card-section>
-
-        <q-card-actions v-if="tickResults.length > 0 && !tickRunning" align="center">
-          <q-btn flat label="Clear" @click="tickResults = []; tickCompleted = 0" />
-          <q-btn flat label="Close" @click="showTickDialog = false" />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -333,7 +256,6 @@ import { useChat } from 'src/store/chat';
 import { IChatMessage } from 'src/components/models';
 import { runTurn, buildPrompt } from 'src/lib/gm-agent';
 import { createSnapshot, restoreSnapshot } from 'src/lib/snapshots';
-import { worldTick, AgentIntent } from 'src/lib/world-tick';
 import { getCurrentSession, createSession, ensureSessions } from 'src/lib/sessions';
 import { ISession } from 'src/components/models';
 import ChatMessage from './ChatMessage.vue';
@@ -471,51 +393,6 @@ export default defineComponent({
       }
       showRewindConfirm.value = false;
       chat.inputText = rewoundText;
-    };
-
-    // World tick
-    const showTickDialog = ref(false);
-    const tickDt = ref('the next few days');
-    const tickRunning = ref(false);
-    const tickResults = ref<AgentIntent[]>([]);
-    const tickDebugIndex = ref(-1);
-    const tickTotal = ref(0);
-    const tickCompleted = ref(0);
-
-    const runTick = async () => {
-      tickRunning.value = true;
-      tickResults.value = [];
-      tickCompleted.value = 0;
-      tickDebugIndex.value = -1;
-      try {
-        await worldTick({
-          campaign: campaign.data,
-          dt: tickDt.value,
-          onProgress: (completed, total, intent) => {
-            tickCompleted.value = completed;
-            tickTotal.value = total;
-            tickResults.value.push(intent);
-          },
-        });
-      } catch (err) {
-        console.error('[World Tick]', err);
-        alert(`Tick failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
-      } finally {
-        tickRunning.value = false;
-      }
-    };
-
-    const intentBadgeColor = (type: string) => {
-      const colors: Record<string, string> = {
-        npc: 'purple',
-        settlement: 'teal',
-        faction: 'orange',
-        planet: 'blue',
-        derelict: 'grey',
-        creature: 'green',
-        starship: 'pink',
-      };
-      return colors[type] || 'grey';
     };
 
     const stop = () => {
@@ -674,15 +551,6 @@ export default defineComponent({
       deleteSessionName,
       confirmDeleteSession,
       doDeleteSession,
-      showTickDialog,
-      tickDt,
-      tickRunning,
-      tickResults,
-      runTick,
-      intentBadgeColor,
-      tickDebugIndex,
-      tickTotal,
-      tickCompleted,
       send,
       showDebug,
       debugTab,
@@ -738,27 +606,6 @@ export default defineComponent({
   animation: blink 0.8s step-end infinite
   color: $primary
   text-shadow: 0 0 8px rgba(200, 164, 92, 0.6)
-
-.tick-intent
-  background: rgba(200, 164, 92, 0.04)
-  border-left: 3px solid rgba(200, 164, 92, 0.2)
-  border-radius: 4px
-  padding: 8px 12px
-
-.tick-intent-text
-  line-height: 1.5
-
-.tick-debug-pre
-  white-space: pre-wrap
-  word-break: break-word
-  font-family: monospace
-  font-size: 0.75rem
-  color: rgba(255, 255, 255, 0.6)
-  background: rgba(0, 0, 0, 0.3)
-  padding: 8px
-  border-radius: 4px
-  max-height: 300px
-  overflow-y: auto
 
 @keyframes blink
   0%, 100%

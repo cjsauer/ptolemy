@@ -1,3 +1,4 @@
+import Anthropic from '@anthropic-ai/sdk';
 import { ICampaign } from 'src/components/models';
 import { buildEntitySystemPrompt, EntityRef } from './context-tree';
 
@@ -6,10 +7,6 @@ export interface AgentIntent {
   intent: string;
   targets: string[];
   systemPrompt: string;
-}
-
-interface OllamaResponse {
-  message: { content: string };
 }
 
 // Collect all entities in the campaign that could have intents
@@ -37,33 +34,32 @@ function collectEntities(campaign: ICampaign): EntityRef[] {
 
 // Ask a single entity what they intend to do
 async function getIntent(
-  ollamaUrl: string,
+  client: Anthropic,
   model: string,
   campaign: ICampaign,
   entity: EntityRef,
-  dt: string
+  dt: string,
+  localContext?: string
 ): Promise<AgentIntent> {
   const systemPrompt = buildEntitySystemPrompt(campaign, entity.type, entity.name);
 
-  const resp = await fetch(`${ollamaUrl}/api/chat`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model,
-      stream: false,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: `Time passes: ${dt}. In a sentence or two, what do you intend to do during this time? Name any specific people, places, or factions involved. Be concrete and specific — not vague aspirations, but actual actions you would take.` },
-      ],
-    }),
-  });
+  let userContent = `Time passes: ${dt}. In a sentence or two, what do you intend to do during this time? Be concrete and specific — not vague aspirations, but actual actions you would take. Only reference people, places, and factions that appear in your context above — do not invent new character names. You can only interact in person with people at your current location. For ${dt}, you cannot travel to other settlements.`;
 
-  if (!resp.ok) {
-    throw new Error(`Ollama error: ${resp.status} ${resp.statusText}`);
+  if (localContext) {
+    userContent = `Here is what is currently happening around you:\n\n${localContext}\n\n${userContent}`;
   }
 
-  const data = (await resp.json()) as OllamaResponse;
-  const text = data.message.content;
+  const response = await client.messages.create({
+    model,
+    max_tokens: 512,
+    system: systemPrompt,
+    messages: [{
+      role: 'user',
+      content: userContent,
+    }],
+  });
+
+  const text = response.content[0]?.type === 'text' ? response.content[0].text : '';
 
   // Extract mentioned entity names from the response (simple heuristic)
   const allNames = collectEntityNames(campaign);
@@ -97,18 +93,23 @@ function collectEntityNames(campaign: ICampaign): string[] {
 }
 
 export interface TickOptions {
-  ollamaUrl?: string;
+  apiKey: string;
   model?: string;
   campaign: ICampaign;
   dt: string;
   entityFilter?: (entity: EntityRef) => boolean;
+  onStart?: (total: number, entities: EntityRef[]) => void;
   onProgress?: (completed: number, total: number, intent: AgentIntent) => void;
 }
 
 export async function worldTick(options: TickOptions): Promise<AgentIntent[]> {
-  const { campaign, dt, entityFilter, onProgress } = options;
-  const ollamaUrl = options.ollamaUrl || 'http://localhost:11434';
-  const model = options.model || 'gpt-oss:20b';
+  const { apiKey, campaign, dt, entityFilter, onStart, onProgress } = options;
+  const model = options.model || 'claude-sonnet-4-6';
+
+  const client = new Anthropic({
+    apiKey,
+    dangerouslyAllowBrowser: true,
+  });
 
   let entities = collectEntities(campaign);
   if (entityFilter) {
@@ -119,23 +120,66 @@ export async function worldTick(options: TickOptions): Promise<AgentIntent[]> {
   let completed = 0;
   const total = entities.length;
 
-  // Run all agents in parallel, report progress as each completes
-  const intentPromises = entities.map(entity =>
-    getIntent(ollamaUrl, model, campaign, entity, dt)
-      .catch(err => ({
-        agent: entity,
-        intent: `[Error: ${err instanceof Error ? err.message : 'Unknown error'}]`,
-        targets: [] as string[],
-        systemPrompt: '',
-      }))
-      .then(intent => {
-        completed++;
-        results.push(intent);
-        if (onProgress) onProgress(completed, total, intent);
-        return intent;
-      })
-  );
+  if (onStart) onStart(total, entities);
 
-  await Promise.all(intentPromises);
+  const report = (intent: AgentIntent) => {
+    completed++;
+    results.push(intent);
+    if (onProgress) onProgress(completed, total, intent);
+  };
+
+  const handleError = (entity: EntityRef) => (err: unknown) => ({
+    agent: entity,
+    intent: `[Error: ${err instanceof Error ? err.message : 'Unknown error'}]`,
+    targets: [] as string[],
+    systemPrompt: '',
+  });
+
+  // Phase 1: Factions — sector-wide forces and agendas
+  const factionEntities = entities.filter(e => e.type === 'faction');
+  const factionPromises = factionEntities.map(entity =>
+    getIntent(client, model, campaign, entity, dt)
+      .catch(handleError(entity))
+      .then(intent => { report(intent); return intent; })
+  );
+  const factionResults = await Promise.all(factionPromises);
+
+  // Build faction context string for settlements
+  const factionContext = factionResults
+    .filter(i => i.intent && !i.intent.startsWith('[Error'))
+    .map(i => `The faction "${i.agent.name}" is acting: ${i.intent}`)
+    .join('\n');
+
+  // Phase 2: Settlements — local atmosphere, pressured by faction activity
+  const settlementEntities = entities.filter(e => e.type === 'settlement');
+  const settlementPromises = settlementEntities.map(entity =>
+    getIntent(client, model, campaign, entity, dt, factionContext || undefined)
+      .catch(handleError(entity))
+      .then(intent => { report(intent); return intent; })
+  );
+  const settlementResults = await Promise.all(settlementPromises);
+
+  // Build a map of cellId -> settlement intent for NPC context
+  const cellContext = new Map<string, string>();
+  for (const intent of settlementResults) {
+    if (intent.agent.cellId) {
+      cellContext.set(intent.agent.cellId, `Local situation at ${intent.agent.name}: ${intent.intent}`);
+    }
+  }
+
+  // Phase 3: NPCs and other entities — individuals reacting to local conditions
+  const npcEntities = entities.filter(e => e.type !== 'settlement' && e.type !== 'faction');
+  const npcPromises = npcEntities.map(entity => {
+    let localCtx: string | undefined;
+    if (entity.cellId && cellContext.has(entity.cellId)) {
+      localCtx = cellContext.get(entity.cellId) as string;
+    }
+
+    return getIntent(client, model, campaign, entity, dt, localCtx)
+      .catch(handleError(entity))
+      .then(intent => { report(intent); return intent; });
+  });
+  await Promise.all(npcPromises);
+
   return results;
 }

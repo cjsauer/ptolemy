@@ -746,6 +746,13 @@ export function buildPrompt(
     text: gameStateContext,
   });
 
+  if (campaign.customPrompt) {
+    system.push({
+      type: 'text',
+      text: `<player_instructions>\n${campaign.customPrompt}\n</player_instructions>`,
+    });
+  }
+
   const messages = buildMessages(chatHistory, playerAction);
 
   return { system, messages, tools: TOOL_DEFINITIONS };

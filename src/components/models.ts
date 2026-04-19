@@ -350,7 +350,23 @@ export interface ICampaign {
   gmChat?: IChatMessage[]; // deprecated, migrated to sessions
   sessions?: ISession[];
   currentSession?: string; // session id
+  customPrompt?: string; // player-defined stylistic/tonal instructions appended to all prompts
+  lastTickResults?: ITickResult;
   lastModified?: number;
+}
+
+export interface ITickResult {
+  dt: string;
+  timestamp: number;
+  intents: ITickIntent[];
+}
+
+export interface ITickIntent {
+  agentType: string;
+  agentName: string;
+  intent: string;
+  targets: string[];
+  systemPrompt: string;
 }
 
 // NPCs

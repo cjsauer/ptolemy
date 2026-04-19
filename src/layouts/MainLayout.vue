@@ -22,6 +22,7 @@
 
       <q-tabs align="center" dense :class="{ crt: crt }">
         <q-route-tab to="/play" label="Play" />
+        <q-route-tab to="/world" label="World" />
         <q-route-tab to="/campaign" label="Campaign" />
         <q-route-tab v-if="config.data.journalTab" to="/journal" label="Journal" />
         <q-route-tab to="/" label="Character" />
@@ -427,6 +428,26 @@
           <q-banner :class="apiTestResult.success ? 'bg-positive' : 'bg-negative'" class="text-white" rounded>
             {{ apiTestResult.message }}
           </q-banner>
+        </q-card-section>
+
+        <q-separator class="q-my-sm" />
+
+        <q-card-section class="sf-header text-h6">Campaign Style</q-card-section>
+
+        <q-card-section>
+          <q-input
+            v-model="campaign.data.customPrompt"
+            label="Custom prompt instructions (per campaign)"
+            standout="bg-blue-grey text-white"
+            :input-style="{ color: '#ECEFF4' }"
+            autogrow
+            type="textarea"
+            hint="Appended to all GM and world tick prompts. Use for tone, setting tweaks, genre conventions, etc."
+          >
+            <template v-slot:prepend>
+              <q-icon name="palette" />
+            </template>
+          </q-input>
         </q-card-section>
 
       </q-card>

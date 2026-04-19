@@ -107,14 +107,19 @@ export function buildContextTree(campaign: ICampaign, type: EntityType, name: st
     sector.notes && `Notes: ${sector.notes}`,
   ].filter(Boolean);
 
-  // Include other settlements/NPCs in the sector as common knowledge
+  // Include other settlements/NPCs in the sector as common knowledge, tagged with location
   const sectorEntities: string[] = [];
-  for (const cell of Object.values(sector.cells)) {
-    cell.settlements.forEach(s => sectorEntities.push(`Settlement: ${s.name} (${s.location}, pop. ${s.population})`));
-    cell.npcs.forEach(n => sectorEntities.push(`Known figure: ${n.name}${n.role ? ` — ${n.role}` : ''}`));
+  for (const [cId, cell] of Object.entries(sector.cells)) {
+    const cellLabel = cell.name && cell.name !== cId ? cell.name : cId;
+    cell.settlements.forEach(s => sectorEntities.push(`Settlement: ${s.name} (${s.location}, at ${cellLabel}, pop. ${s.population})`));
+    cell.npcs.forEach(n => {
+      const locName = cell.settlements[0]?.name || cell.name || cellLabel;
+      sectorEntities.push(`Known figure: ${n.name}${n.role ? ` — ${n.role}` : ''} (at ${locName})`);
+    });
   }
   if (sectorEntities.length > 0) {
     sectorParts.push(`\nKnown in this sector:\n${sectorEntities.join('\n')}`);
+    sectorParts.push('\nTravel between settlements in this sector takes days to weeks. You cannot physically meet with anyone outside your current location on short timescales.');
   }
 
   layers.push({
@@ -399,12 +404,14 @@ export function buildEntitySystemPrompt(campaign: ICampaign, type: EntityType, n
 
   const contextBlocks = layers.map(l => `<${l.label}>\n${l.content}\n</${l.label}>`).join('\n\n');
 
+  const customPrompt = campaign.customPrompt ? `\n\nAdditional instructions from the player:\n${campaign.customPrompt}` : '';
+
   return `${roleInstructions}
 
 The following is what you know about the world and your place in it:
 
 ${contextBlocks}
-${pcSection}`;
+${pcSection}${customPrompt}`;
 }
 
 function entityRoleInstructions(type: EntityType, name: string): string {
@@ -439,4 +446,73 @@ You are not a single person. You are the collective texture of this location.`;
     case 'vault':
       return `You are ${name}, an ancient precursor vault. You are alien, mysterious, and dangerous. Describe what someone encounters as they explore you — the architecture, the mechanisms, the traps, the wonders. You were built by beings long gone, for purposes that may be incomprehensible. Your interior shifts between awe and dread.`;
   }
+}
+
+// Look up an entity by name across all types, return a summary for display
+export interface EntitySummary {
+  type: EntityType;
+  name: string;
+  fields: Record<string, string>;
+}
+
+export function lookupEntityByName(campaign: ICampaign, name: string): EntitySummary | null {
+  const nameLower = name.toLowerCase();
+
+  // Check factions
+  for (const f of campaign.factions) {
+    if (f.name.toLowerCase() === nameLower) {
+      return { type: 'faction', name: f.name, fields: filterEmpty({ type: f.type, influence: f.influence, sphere: f.sphere, projects: f.projects, notes: f.notes }) };
+    }
+  }
+
+  // Check all cells
+  for (const sector of campaign.sectors) {
+    for (const cell of Object.values(sector.cells)) {
+      for (const n of cell.npcs) {
+        if (n.name.toLowerCase() === nameLower) {
+          return { type: 'npc', name: n.name, fields: filterEmpty({ callsign: n.callsign, role: n.role, disposition: n.disposition, goal: n.goal, aspect: n.aspect, notes: n.notes }) };
+        }
+      }
+      for (const s of cell.settlements) {
+        if (s.name.toLowerCase() === nameLower) {
+          return { type: 'settlement', name: s.name, fields: filterEmpty({ location: s.location, population: s.population, authority: s.authority, trouble: s.trouble, projects: s.projects, notes: s.notes }) };
+        }
+      }
+      for (const p of cell.planets) {
+        if (p.name.toLowerCase() === nameLower) {
+          return { type: 'planet', name: p.name, fields: filterEmpty({ type: p.type, atmosphere: p.atmosphere, life: p.life, description: p.description, notes: p.notes }) };
+        }
+      }
+      for (const d of cell.derelicts) {
+        if (d.name.toLowerCase() === nameLower) {
+          return { type: 'derelict', name: d.name, fields: filterEmpty({ type: d.type, condition: d.condition, notes: d.notes }) };
+        }
+      }
+      for (const s of cell.ships) {
+        if (s.name.toLowerCase() === nameLower) {
+          return { type: 'starship', name: s.name, fields: filterEmpty({ class: s.class, mission: s.mission, notes: s.notes }) };
+        }
+      }
+      for (const cr of cell.creatures) {
+        if (cr.name.toLowerCase() === nameLower) {
+          return { type: 'creature', name: cr.name, fields: filterEmpty({ environment: cr.environment, scale: cr.scale, behaviour: cr.behaviour, notes: cr.notes }) };
+        }
+      }
+      for (const v of cell.vaults) {
+        if (v.name.toLowerCase() === nameLower) {
+          return { type: 'vault', name: v.name, fields: filterEmpty({ location: v.location, purpose: v.purpose, notes: v.notes }) };
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+function filterEmpty(obj: Record<string, string | undefined>): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v) out[k] = v;
+  }
+  return out;
 }

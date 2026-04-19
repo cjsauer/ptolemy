@@ -9,7 +9,7 @@ export function NewConfig(): IConfig {
     edit: true,
     saving: false,
     claudeApiKey: '',
-    claudeModel: 'claude-opus-4-6',
+    claudeModel: 'claude-sonnet-4-6',
     map: {
       height: 400,
       width: 800,
