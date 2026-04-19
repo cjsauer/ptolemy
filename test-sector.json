@@ -1,0 +1,273 @@
+{
+  "id": "test-delphian-gap",
+  "name": "Delphian Gap Playtest",
+  "character": {
+    "name": "",
+    "pronouns": "",
+    "callsign": "",
+    "characteristics": "",
+    "location": "Burrow",
+    "stats": { "edge": 0, "heart": 0, "iron": 0, "shadow": 0, "wits": 0 },
+    "tracks": {
+      "health": { "value": 5, "max": 5, "min": 0 },
+      "spirit": { "value": 5, "max": 5, "min": 0 },
+      "supply": { "value": 5, "max": 5, "min": 0 },
+      "momentum": { "value": 2, "max": 10, "min": -6, "reset": 2 }
+    },
+    "legacies": {
+      "quests": { "plus10": false, "boxes": [] },
+      "bonds": { "plus10": false, "boxes": [] },
+      "discoveries": { "plus10": false, "boxes": [] }
+    },
+    "clocks": [],
+    "impacts": {},
+    "vows": [],
+    "gear": "",
+    "assets": []
+  },
+  "truths": {
+    "cataclysm": "The Forge was never settled by a single exodus. Humanity drifted here over centuries, fleeing a dozen different catastrophes across the old galaxies.",
+    "communities": "Settlements are scattered and isolated. Most are small, starved for resources, and on the brink of ruin.",
+    "iron": "Iron vows are sworn upon fragments of the Exodus ships — shards carried across generations.",
+    "laws": "Much of the settled domains are lawless frontier. Criminal factions and corrupt leaders hold sway.",
+    "horrors": "Spacers whisper of things in the dark between stars. Most dismiss the stories. Those who have seen them do not."
+  },
+  "progressTracks": [],
+  "journal": [],
+  "sectors": [
+    {
+      "name": "Delphian Gap",
+      "region": "Terminus",
+      "control": "",
+      "notes": "A corrupted star casts unnatural light over this sector. Rumors of a growing protection racket threaten the fragile peace between settlements.",
+      "cells": {
+        "h-4-3": {
+          "id": "h-4-3",
+          "stat": "location",
+          "name": "Burrow",
+          "factions": [],
+          "notes": "",
+          "stars": [{ "name": "The Blighted Eye", "description": "Corrupted star radiating with unnatural light" }],
+          "planets": [],
+          "settlements": [
+            {
+              "name": "Burrow",
+              "location": "Deep Space",
+              "population": "Thousands",
+              "firstLook": "Sprawling or dispersed structures, Hidden or subsurface location",
+              "initialContact": "",
+              "authority": "Corrupt",
+              "projects": "Mining, Evacuation",
+              "trouble": "Hazardous environment",
+              "notes": "A deep-space mining station built into the hollowed-out core of a captured asteroid. Thousands live in cramped tunnels under corrupt bosses who skim the mining profits. An evacuation has been ordered for the lower levels due to structural instability, but no one believes it will actually happen."
+            }
+          ],
+          "derelicts": [],
+          "ships": [],
+          "npcs": [
+            {
+              "name": "Eren Sutton",
+              "pronouns": "he/him",
+              "callsign": "Cypher",
+              "firstLook": "Aged but energetic, quick eyes that miss nothing",
+              "disposition": "Curious",
+              "role": "Crew boss in the lower mining tunnels",
+              "goal": "Sabotage the station's surveillance network",
+              "aspect": "Secretive, deeply loyal to his crew",
+              "track": { "name": "", "difficulty": 1, "boxes": [0,0,0,0,0,0,0,0,0,0], "clocks": [] },
+              "connection": true,
+              "bond": false,
+              "notes": "Eren runs a crew of miners in Burrow's dangerous lower levels. He's been quietly mapping the station's surveillance blind spots. He doesn't trust the bosses and suspects they're planning to seal the lower levels rather than evacuate them."
+            },
+            {
+              "name": "Mave Korda",
+              "pronouns": "she/her",
+              "callsign": "Fuse",
+              "firstLook": "Burn scars across her hands, perpetual scowl",
+              "disposition": "Suspicious",
+              "role": "Demolitions expert and black-market arms dealer",
+              "goal": "Acquire enough credits to buy passage off-station",
+              "aspect": "Ruthlessly pragmatic",
+              "track": { "name": "", "difficulty": 1, "boxes": [0,0,0,0,0,0,0,0,0,0], "clocks": [] },
+              "connection": false,
+              "bond": false,
+              "notes": "Mave sells homemade explosives and salvaged weapons from a hidden workshop in Burrow's maintenance tunnels. She knows the station's structure better than anyone — she's been blowing holes in it for years."
+            }
+          ],
+          "creatures": [],
+          "vaults": [],
+          "sightings": []
+        },
+        "h-7-2": {
+          "id": "h-7-2",
+          "stat": "location",
+          "name": "Deadrock",
+          "factions": [],
+          "notes": "",
+          "stars": [{ "name": "Amber", "description": "Glowing orange star" }],
+          "planets": [
+            {
+              "type": "Desert",
+              "name": "Ashfall",
+              "description": "A marginal desert world with thin, barely breathable air. Dust storms scour the surface for weeks at a time.",
+              "atmosphere": "Marginal",
+              "settlements": "",
+              "observed": "",
+              "feature": "",
+              "life": "Scarce",
+              "notes": ""
+            }
+          ],
+          "settlements": [
+            {
+              "name": "Deadrock",
+              "location": "Orbital",
+              "population": "Few",
+              "firstLook": "Repurposed derelict, jury-rigged systems",
+              "initialContact": "",
+              "authority": "Tolerant",
+              "projects": "Spirituality, Festival",
+              "trouble": "",
+              "notes": "A tiny orbital station built from a salvaged warship hull. The few dozen inhabitants are a tight-knit community of mystics and drifters who hold weekly festivals honoring the dead ships of the Forge."
+            }
+          ],
+          "derelicts": [],
+          "ships": [],
+          "npcs": [
+            {
+              "name": "Sage Okafor",
+              "pronouns": "they/them",
+              "callsign": "Candle",
+              "firstLook": "Shaved head, ceremonial tattoos, serene expression",
+              "disposition": "Friendly",
+              "role": "Spiritual leader of the Deadrock community",
+              "goal": "Recover a relic from a precursor vault on Ashfall's surface",
+              "aspect": "Gentle but unshakeable conviction",
+              "track": { "name": "", "difficulty": 1, "boxes": [0,0,0,0,0,0,0,0,0,0], "clocks": [] },
+              "connection": false,
+              "bond": false,
+              "notes": "Sage leads the community's death-festivals and tends to the spiritual needs of travelers. They believe a precursor artifact on Ashfall below holds the key to communicating with the spirits of dead ships. They need someone brave enough to retrieve it."
+            }
+          ],
+          "creatures": [],
+          "vaults": [],
+          "sightings": []
+        },
+        "h-3-6": {
+          "id": "h-3-6",
+          "stat": "location",
+          "name": "Perchance",
+          "factions": [],
+          "notes": "",
+          "stars": [{ "name": "Cradle", "description": "Young star incubating in a molecular cloud" }],
+          "planets": [
+            {
+              "type": "Ocean",
+              "name": "Siren",
+              "description": "A dead ocean world with a corrosive atmosphere. The seas are acidic and lifeless, but mineral-rich.",
+              "atmosphere": "Corrosive",
+              "settlements": "",
+              "observed": "",
+              "feature": "",
+              "life": "Extinct",
+              "notes": ""
+            }
+          ],
+          "settlements": [
+            {
+              "name": "Perchance",
+              "location": "Planetside",
+              "population": "Thousands",
+              "firstLook": "Fortified compound, military presence",
+              "initialContact": "",
+              "authority": "Oppressive",
+              "projects": "Warfare, Defense",
+              "trouble": "",
+              "notes": "A militarized settlement on the shores of Siren's acid seas. The ruling council maintains order through force and controls access to the planet's mineral wealth. Dissent is crushed."
+            }
+          ],
+          "derelicts": [],
+          "ships": [],
+          "npcs": [
+            {
+              "name": "Commander Thane Rook",
+              "pronouns": "he/him",
+              "callsign": "Bastion",
+              "firstLook": "Rigid posture, polished armor, cold eyes",
+              "disposition": "Demanding",
+              "role": "Military commander of Perchance",
+              "goal": "Expand Perchance's territorial control to neighboring systems",
+              "aspect": "Ambitious, believes order justifies any cost",
+              "track": { "name": "", "difficulty": 1, "boxes": [0,0,0,0,0,0,0,0,0,0], "clocks": [] },
+              "connection": false,
+              "bond": false,
+              "notes": "Rook runs Perchance like a military outpost. He's been sending scout ships to survey the Delphian Gap, and rumor has it he's planning to extend his 'protection' to Burrow and Deadrock — whether they want it or not."
+            }
+          ],
+          "creatures": [],
+          "vaults": [],
+          "sightings": []
+        },
+        "h-8-5": {
+          "id": "h-8-5",
+          "stat": "location",
+          "name": "Lodestar",
+          "factions": [],
+          "notes": "",
+          "stars": [{ "name": "Whisper", "description": "Young star incubating in a molecular cloud" }],
+          "planets": [],
+          "settlements": [
+            {
+              "name": "Lodestar",
+              "location": "Deep Space",
+              "population": "Hundreds",
+              "firstLook": "Advanced technology, clean and orderly",
+              "initialContact": "",
+              "authority": "Unyielding",
+              "projects": "Research, Shipbuilding",
+              "trouble": "",
+              "notes": "A research station and shipyard suspended in the molecular cloud around the star Whisper. The station's director maintains strict protocols and doesn't tolerate outsiders. They're building something — no one outside Lodestar knows what."
+            }
+          ],
+          "derelicts": [],
+          "ships": [],
+          "npcs": [
+            {
+              "name": "Director Anika Voss",
+              "pronouns": "she/her",
+              "callsign": "Architect",
+              "firstLook": "Immaculate uniform, calculating gaze, never raises her voice",
+              "disposition": "Cautious",
+              "role": "Director of Lodestar research station",
+              "goal": "Complete a secret shipbuilding project before Rook discovers it",
+              "aspect": "Brilliant, paranoid, plays the long game",
+              "track": { "name": "", "difficulty": 1, "boxes": [0,0,0,0,0,0,0,0,0,0], "clocks": [] },
+              "connection": false,
+              "bond": false,
+              "notes": "Voss is building a warship — or something like one — in Lodestar's hidden drydock. She's heard about Rook's expansion plans and believes Perchance will eventually come for Lodestar's technology. She needs resources and allies, but trusts no one."
+            }
+          ],
+          "creatures": [],
+          "vaults": [],
+          "sightings": []
+        }
+      }
+    }
+  ],
+  "factions": [
+    {
+      "id": "faction-1",
+      "name": "The Ash Syndicate",
+      "type": "Criminal",
+      "influence": "Significant",
+      "sphere": "Trade and smuggling",
+      "projects": "Establishing a protection racket across the Delphian Gap",
+      "relationships": "Supplies Burrow's corrupt bosses, has agents in Perchance",
+      "quirks": "Members brand themselves with ash-marks",
+      "rumors": "Said to have a hidden base in the molecular cloud near Lodestar",
+      "notes": "A criminal organization that has been quietly extending its reach across the sector. They profit from the lawlessness and actively undermine any attempt at legitimate governance.",
+      "colour": "red",
+      "leadership": ""
+    }
+  ]
+}

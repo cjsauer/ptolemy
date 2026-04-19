@@ -81,54 +81,98 @@ export function getGameState(campaign: ICampaign) {
   };
 
   const sectors = campaign.sectors.map((sector, i) => {
-    const cells = Object.values(sector.cells);
-    const settlements = cells.flatMap((c) => c.settlements.map((s) => ({
-      name: s.name, location: s.location, population: s.population,
-      authority: s.authority, firstLook: s.firstLook || undefined,
-      trouble: s.trouble || undefined, projects: s.projects || undefined,
-      notes: s.notes || undefined,
-    }))).filter((s) => s.name);
-    const npcs = cells.flatMap((c) => c.npcs.map((n) => ({
-      name: n.name, role: n.role, disposition: n.disposition || undefined,
-      goal: n.goal || undefined, bond: n.bond, connection: n.connection,
-      notes: n.notes || undefined,
-    }))).filter((n) => n.name);
-    const planets = cells.flatMap((c) => c.planets.map((p) => ({
-      name: p.name, type: p.type, atmosphere: p.atmosphere || undefined,
-      life: p.life || undefined, description: p.description || undefined,
-      notes: p.notes || undefined,
-    }))).filter((p) => p.name);
-    const ships = cells.flatMap((c) => c.ships.map((s) => ({
-      name: s.name, class: s.class || undefined, mission: s.mission || undefined,
-      notes: s.notes || undefined,
-    }))).filter((s) => s.name);
-    const derelicts = cells.flatMap((c) => c.derelicts.map((d) => ({
-      name: d.name, type: d.type, condition: d.condition || undefined,
-      notes: d.notes || undefined,
-    }))).filter((d) => d.name);
-    const creatures = cells.flatMap((c) => c.creatures.map((cr) => ({
-      name: cr.name, environment: cr.environment || undefined,
-      scale: cr.scale || undefined, behaviour: cr.behaviour || undefined,
-      notes: cr.notes || undefined,
-    }))).filter((cr) => cr.name);
+    const cells = Object.entries(sector.cells).map(([cellId, c]) => {
+      const cellData: Record<string, unknown> = {};
+      if (c.name && c.name !== cellId) cellData.name = c.name;
+      if (c.notes) cellData.notes = c.notes;
+      if (c.factions?.length) cellData.factions = c.factions;
+
+      if (c.stars?.length) cellData.stars = c.stars.map((s) => ({ name: s.name, description: s.description }));
+
+      if (c.settlements?.length) cellData.settlements = c.settlements.filter((s) => s.name).map((s) => ({
+        name: s.name, location: s.location, population: s.population,
+        authority: s.authority || undefined, firstLook: s.firstLook || undefined,
+        initialContact: s.initialContact || undefined,
+        trouble: s.trouble || undefined, projects: s.projects || undefined,
+        notes: s.notes || undefined,
+      }));
+
+      if (c.npcs?.length) cellData.npcs = c.npcs.filter((n) => n.name).map((n) => ({
+        name: n.name, callsign: n.callsign || undefined,
+        pronouns: n.pronouns || undefined, role: n.role || undefined,
+        disposition: n.disposition || undefined, goal: n.goal || undefined,
+        aspect: n.aspect || undefined, firstLook: n.firstLook || undefined,
+        bond: n.bond, connection: n.connection, notes: n.notes || undefined,
+      }));
+
+      if (c.planets?.length) cellData.planets = c.planets.filter((p) => p.name).map((p) => ({
+        name: p.name, type: p.type, atmosphere: p.atmosphere || undefined,
+        life: p.life || undefined, description: p.description || undefined,
+        observed: p.observed || undefined, feature: p.feature || undefined,
+        diversity: p.diversity || undefined, biomes: p.biomes || undefined,
+        notes: p.notes || undefined,
+      }));
+
+      if (c.ships?.length) cellData.ships = c.ships.filter((s) => s.name).map((s) => ({
+        name: s.name, class: s.class || undefined, fleet: s.fleet || undefined,
+        initialContact: s.initialContact || undefined, firstLook: s.firstLook || undefined,
+        mission: s.mission || undefined, notes: s.notes || undefined,
+        faction: s.factionId ? campaign.factions.find((f) => f.id === s.factionId)?.name : undefined,
+      }));
+
+      if (c.derelicts?.length) cellData.derelicts = c.derelicts.filter((d) => d.name).map((d) => ({
+        name: d.name, type: d.type, location: d.location,
+        condition: d.condition || undefined,
+        outerFirstLook: d.outerFirstLook || undefined, innerFirstLook: d.innerFirstLook || undefined,
+        currentZone: d.currentZone || undefined,
+        explore: (d.explore?.area || d.explore?.feature || d.explore?.peril || d.explore?.opportunity) ? d.explore : undefined,
+        notes: d.notes || undefined,
+      }));
+
+      if (c.creatures?.length) cellData.creatures = c.creatures.filter((cr) => cr.name).map((cr) => ({
+        name: cr.name, environment: cr.environment || undefined,
+        scale: cr.scale || undefined, form: cr.form || undefined,
+        firstLook: cr.firstLook || undefined,
+        behaviour: cr.behaviour || undefined, aspect: cr.aspect || undefined,
+        notes: cr.notes || undefined,
+      }));
+
+      if (c.vaults?.length) cellData.vaults = c.vaults.filter((v) => v.name).map((v) => ({
+        name: v.name, location: v.location, scale: v.scale || undefined,
+        form: v.form || undefined, shape: v.shape || undefined,
+        material: v.material || undefined,
+        outerFirstLook: v.outerFirstLook || undefined, innerFirstLook: v.innerFirstLook || undefined,
+        purpose: v.purpose || undefined, notes: v.notes || undefined,
+      }));
+
+      if (c.sightings?.length) cellData.sightings = c.sightings.filter((s) => s.name).map((s) => ({
+        name: s.name, notes: s.notes || undefined,
+      }));
+
+      // Only include cells with content
+      const hasContent = Object.keys(cellData).length > 0;
+      return hasContent ? { cellId, ...cellData } : null;
+    }).filter(Boolean);
 
     return {
       index: i,
       name: sector.name,
       region: sector.region,
+      control: sector.control || undefined,
       notes: sector.notes || undefined,
-      settlements,
-      npcs,
-      planets,
-      ships: ships.length > 0 ? ships : undefined,
-      derelicts: derelicts.length > 0 ? derelicts : undefined,
-      creatures: creatures.length > 0 ? creatures : undefined,
+      cells: cells.length > 0 ? cells : undefined,
     };
   });
 
   const factions = campaign.factions
     .filter((f) => f.name)
-    .map((f) => ({ name: f.name, type: f.type, influence: f.influence }));
+    .map((f) => ({
+      name: f.name, type: f.type || undefined, influence: f.influence || undefined,
+      leadership: f.leadership || undefined, sphere: f.sphere || undefined,
+      projects: f.projects || undefined, relationships: f.relationships || undefined,
+      quirks: f.quirks || undefined, rumors: f.rumors || undefined,
+      notes: f.notes || undefined,
+    }));
 
   return {
     campaignName: campaign.name,
