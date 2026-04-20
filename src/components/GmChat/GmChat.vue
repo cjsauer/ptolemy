@@ -1,44 +1,5 @@
 <template>
   <div class="gm-chat">
-    <!-- Session bar -->
-    <div class="session-bar row items-center no-wrap q-px-sm q-py-xs">
-      <q-btn-dropdown flat dense no-caps :label="currentSession?.name || 'No session'" size="sm" color="primary" class="session-dropdown">
-        <q-list dense>
-          <q-item
-            v-for="s in sessions"
-            :key="s.id"
-            clickable
-            v-close-popup
-            @click="switchToSession(s.id)"
-            :active="s.id === currentSession?.id"
-          >
-            <q-item-section>
-              <q-item-label>{{ s.name }}</q-item-label>
-              <q-item-label caption>{{ new Date(s.createdAt).toLocaleDateString() }} · {{ s.chat.length }} messages</q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-btn
-                flat
-                dense
-                round
-                icon="delete"
-                size="xs"
-                color="grey-7"
-                @click.stop="confirmDeleteSession(s.id, s.name)"
-              />
-            </q-item-section>
-          </q-item>
-          <q-separator />
-          <q-item clickable v-close-popup @click="newSession()">
-            <q-item-section avatar>
-              <q-icon name="add" size="xs" />
-            </q-item-section>
-            <q-item-section>New Session</q-item-section>
-          </q-item>
-        </q-list>
-      </q-btn-dropdown>
-    </div>
-
     <!-- Messages -->
     <div ref="messageList" class="col q-pa-md message-list">
       <div v-if="messages.length === 0" class="text-center text-grey q-mt-xl">
@@ -83,54 +44,95 @@
     </div>
 
     <!-- Input bar -->
-    <div class="input-bar q-pa-sm row items-center no-wrap">
-      <q-btn
-        round
-        dense
-        flat
-        icon="mdi-bug"
-        size="sm"
-        color="grey"
-        class="q-mr-xs"
-        @click="showDebug = true"
-      >
-        <q-tooltip>Debug panel</q-tooltip>
-      </q-btn>
-      <q-input
-        v-model="chat.inputText"
-        placeholder="What do you do?"
-        outlined
-        dense
-        dark
-        autogrow
-        :disable="chat.thinking"
-        @keydown.enter.exact.prevent="send"
-        class="col"
-      >
-        <template v-slot:after>
-          <q-btn
-            v-if="!chat.thinking"
-            round
-            dense
-            flat
-            icon="send"
-            color="primary"
-            :disable="!chat.inputText.trim()"
-            @click="send"
-          />
-          <q-btn
-            v-else
-            round
-            dense
-            flat
-            icon="stop"
-            color="negative"
-            @click="stop"
-          >
-            <q-tooltip>Stop generating</q-tooltip>
-          </q-btn>
-        </template>
-      </q-input>
+    <!-- Input area -->
+    <div class="input-area">
+      <!-- Toolbar row -->
+      <div class="input-toolbar row items-center no-wrap q-px-sm">
+        <q-btn-dropdown
+          flat
+          dense
+          no-caps
+          size="sm"
+          color="grey"
+          class="session-selector"
+          :menu-anchor="'top left'"
+          :menu-self="'bottom left'"
+        >
+          <template v-slot:label>
+            <q-icon name="mdi-message-text-outline" size="xs" class="q-mr-xs" />
+            <span class="session-label">{{ currentSession?.name || 'No session' }}</span>
+          </template>
+          <q-list dense class="session-menu">
+            <q-item
+              v-for="s in sessions"
+              :key="s.id"
+              clickable
+              v-close-popup
+              @click="switchToSession(s.id)"
+              :active="s.id === currentSession?.id"
+              active-class="session-active"
+            >
+              <q-item-section>
+                <q-item-label>{{ s.name }}</q-item-label>
+                <q-item-label caption>{{ new Date(s.createdAt).toLocaleDateString() }} · {{ s.chat.length }} msg</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-btn flat dense round icon="mdi-close" size="xs" color="grey-7" @click.stop="confirmDeleteSession(s.id, s.name)" />
+              </q-item-section>
+            </q-item>
+            <q-separator />
+            <q-item clickable v-close-popup @click="newSession()">
+              <q-item-section avatar>
+                <q-icon name="add" size="xs" color="primary" />
+              </q-item-section>
+              <q-item-section class="text-primary">New Session</q-item-section>
+            </q-item>
+          </q-list>
+        </q-btn-dropdown>
+      </div>
+
+      <!-- Input row -->
+      <div class="input-row row items-center no-wrap q-px-sm q-pb-sm">
+        <q-btn flat dense round icon="mdi-bug" size="xs" color="grey-7" class="q-mr-xs" @click="showDebug = true">
+          <q-tooltip>Debug</q-tooltip>
+        </q-btn>
+        <q-input
+          v-model="chat.inputText"
+          placeholder="What do you do?"
+          outlined
+          dense
+          dark
+          autogrow
+          :disable="chat.thinking"
+          @keydown.enter.exact.prevent="send"
+          class="col"
+          input-class="input-field"
+        >
+          <template v-slot:after>
+            <q-btn
+              v-if="!chat.thinking"
+              round
+              dense
+              flat
+              icon="mdi-send"
+              color="primary"
+              :disable="!chat.inputText.trim()"
+              @click="send"
+            />
+            <q-btn
+              v-else
+              round
+              dense
+              flat
+              icon="mdi-stop"
+              color="negative"
+              @click="stop"
+            >
+              <q-tooltip>Stop generating</q-tooltip>
+            </q-btn>
+          </template>
+        </q-input>
+      </div>
     </div>
 
     <!-- Rewind confirm -->
@@ -572,11 +574,6 @@ export default defineComponent({
   flex: 1
   overflow-x: hidden
 
-.session-bar
-  flex-shrink: 0
-  border-bottom: 1px solid rgba(200, 164, 92, 0.1)
-  background: rgba(12, 14, 24, 0.95)
-
 .message-list
   max-width: 1200px
   margin: 0 auto
@@ -588,13 +585,40 @@ export default defineComponent({
   flex: 1
   min-height: 0
 
-.input-bar
+.input-area
   flex-shrink: 0
-  border-top: 1px solid rgba(200, 164, 92, 0.12)
+  border-top: 1px solid rgba(200, 164, 92, 0.08)
   background: rgba(12, 14, 24, 0.95)
   max-width: 1200px
   margin: 0 auto
   width: 100%
+
+.input-toolbar
+  padding-top: 4px
+  padding-bottom: 2px
+
+.session-selector
+  opacity: 0.7
+  transition: opacity 0.15s
+  &:hover
+    opacity: 1
+
+.session-label
+  font-family: Convergence
+  font-size: 0.7rem
+  letter-spacing: 0.04em
+  text-transform: uppercase
+
+.session-menu
+  min-width: 240px
+  background: #151929
+
+.session-active
+  background: rgba(200, 164, 92, 0.08)
+  border-left: 2px solid rgba(200, 164, 92, 0.6)
+
+.input-row
+  padding-top: 0
 
 .streaming-body
   background: rgba(20, 25, 42, 0.9)

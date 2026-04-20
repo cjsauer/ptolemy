@@ -78,15 +78,16 @@
           <div v-for="(intent, i) in factionIntents" :key="'f'+i" class="intent-card intent-faction">
             <div class="intent-card-header row items-center no-wrap">
               <q-badge color="orange" class="q-mr-sm">faction</q-badge>
-              <span class="intent-name">{{ intent.agent.name }}</span>
+              <span class="intent-name clickable" @click="toggleTarget(intent.agent.name)">{{ intent.agent.name }}</span>
               <q-space />
               <q-btn flat dense round icon="mdi-bug" size="xs" color="grey-7" @click="toggleDebug('f'+i)">
                 <q-tooltip>Show prompt</q-tooltip>
               </q-btn>
             </div>
-            <div class="intent-body">{{ intent.intent }}</div>
+            <div class="intent-body gm-text" v-html="renderMd(intent.intent)"></div>
             <div v-if="intent.targets.length > 0" class="intent-targets">
               <div v-for="target in intent.targets" :key="target" class="target-chip" @click="toggleTarget(target)">
+                <span v-if="lookupTarget(target)" class="target-type">{{ lookupTarget(target).type }}</span>
                 {{ target }}
               </div>
             </div>
@@ -111,15 +112,16 @@
           <div v-for="(intent, i) in settlementIntents" :key="'s'+i" class="intent-card intent-settlement">
             <div class="intent-card-header row items-center no-wrap">
               <q-badge color="teal" class="q-mr-sm">settlement</q-badge>
-              <span class="intent-name">{{ intent.agent.name }}</span>
+              <span class="intent-name clickable" @click="toggleTarget(intent.agent.name)">{{ intent.agent.name }}</span>
               <q-space />
               <q-btn flat dense round icon="mdi-bug" size="xs" color="grey-7" @click="toggleDebug('s'+i)">
                 <q-tooltip>Show prompt</q-tooltip>
               </q-btn>
             </div>
-            <div class="intent-body">{{ intent.intent }}</div>
+            <div class="intent-body gm-text" v-html="renderMd(intent.intent)"></div>
             <div v-if="intent.targets.length > 0" class="intent-targets">
               <div v-for="target in intent.targets" :key="target" class="target-chip" @click="toggleTarget(target)">
+                <span v-if="lookupTarget(target)" class="target-type">{{ lookupTarget(target).type }}</span>
                 {{ target }}
               </div>
             </div>
@@ -144,15 +146,16 @@
           <div v-for="(intent, i) in npcIntents" :key="'n'+i" class="intent-card intent-npc">
             <div class="intent-card-header row items-center no-wrap">
               <q-badge color="purple" class="q-mr-sm">npc</q-badge>
-              <span class="intent-name">{{ intent.agent.name }}</span>
+              <span class="intent-name clickable" @click="toggleTarget(intent.agent.name)">{{ intent.agent.name }}</span>
               <q-space />
               <q-btn flat dense round icon="mdi-bug" size="xs" color="grey-7" @click="toggleDebug('n'+i)">
                 <q-tooltip>Show prompt</q-tooltip>
               </q-btn>
             </div>
-            <div class="intent-body">{{ intent.intent }}</div>
+            <div class="intent-body gm-text" v-html="renderMd(intent.intent)"></div>
             <div v-if="intent.targets.length > 0" class="intent-targets">
               <div v-for="target in intent.targets" :key="target" class="target-chip" @click="toggleTarget(target)">
+                <span v-if="lookupTarget(target)" class="target-type">{{ lookupTarget(target).type }}</span>
                 {{ target }}
               </div>
             </div>
@@ -186,6 +189,7 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed, onMounted } from 'vue';
+import { marked } from 'marked';
 import { useCampaign } from 'src/store/campaign';
 import { useConfig } from 'src/store/config';
 import { useChat } from 'src/store/chat';
@@ -279,6 +283,16 @@ export default defineComponent({
       debugOpen.value = debugOpen.value === key ? '' : key;
     };
 
+    const targetCache = new Map<string, EntitySummary | null>();
+    const lookupTarget = (name: string) => {
+      if (!targetCache.has(name)) {
+        targetCache.set(name, lookupEntityByName(campaign.data, name));
+      }
+      return targetCache.get(name);
+    };
+
+    const renderMd = (text: string) => marked.parse(text) as string;
+
     const toggleTarget = (name: string) => {
       const entity = lookupEntityByName(campaign.data, name);
       if (entity) {
@@ -300,6 +314,8 @@ export default defineComponent({
       runTick,
       clearResults,
       toggleDebug,
+      renderMd,
+      lookupTarget,
       toggleTarget,
     };
   },
@@ -404,6 +420,11 @@ export default defineComponent({
   font-size: 1.1rem
   letter-spacing: 0.03em
 
+  &.clickable
+    cursor: pointer
+    &:hover
+      color: $primary
+
 .intent-body
   font-size: 0.9rem
   line-height: 1.5
@@ -423,8 +444,17 @@ export default defineComponent({
   font-size: 0.8rem
   cursor: pointer
   transition: background 0.1s
+  display: inline-flex
+  align-items: center
+  gap: 4px
   &:hover
     background: rgba(200, 164, 92, 0.25)
+
+.target-type
+  font-size: 0.65rem
+  text-transform: uppercase
+  letter-spacing: 0.05em
+  opacity: 0.5
 
 .intent-debug
   white-space: pre-wrap

@@ -41,7 +41,7 @@ async function getIntent(
   dt: string,
   localContext?: string
 ): Promise<AgentIntent> {
-  const systemPrompt = buildEntitySystemPrompt(campaign, entity.type, entity.name);
+  const systemPrompt = buildEntitySystemPrompt(campaign, entity.type, entity.name, false);
 
   let userContent = `Time passes: ${dt}. In a sentence or two, what do you intend to do during this time? Be concrete and specific — not vague aspirations, but actual actions you would take. Only reference people, places, and factions that appear in your context above — do not invent new character names. You can only interact in person with people at your current location. For ${dt}, you cannot travel to other settlements.`;
 

@@ -29,7 +29,7 @@ export function createSession(campaign: ICampaign, name?: string): ISession {
   ensureSessions(campaign);
   const session: ISession = {
     id: uuid(),
-    name: name || `Session ${(campaign.sessions?.length || 0) + 1}`,
+    name: name || `Session ${campaign.sessions?.length || 0}`,
     chat: [],
     createdAt: Date.now(),
   };

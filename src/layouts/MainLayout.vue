@@ -21,7 +21,7 @@
       </q-toolbar>
 
       <q-tabs align="center" dense :class="{ crt: crt }">
-        <q-route-tab to="/play" label="Play" />
+        <q-route-tab to="/play" label="GM" />
         <q-route-tab to="/world" label="World" />
         <q-route-tab to="/campaign" label="Campaign" />
         <q-route-tab v-if="config.data.journalTab" to="/journal" label="Journal" />

@@ -380,25 +380,27 @@ function buildEntityContext(campaign: ICampaign, type: EntityType, name: string,
 }
 
 // Assemble a complete system prompt for an entity agent
-export function buildEntitySystemPrompt(campaign: ICampaign, type: EntityType, name: string): string {
+export function buildEntitySystemPrompt(campaign: ICampaign, type: EntityType, name: string, includePC = true): string {
   const layers = buildContextTree(campaign, type, name);
 
   if (layers.length === 0) {
     return `You are ${name}. Respond in character.`;
   }
 
-  // Player character summary (public-facing info the entity would know)
-  const pc = campaign.character;
-  const pcParts = [
-    pc.name && `Name: ${pc.name}`,
-    pc.callsign && `Callsign: ${pc.callsign}`,
-    pc.pronouns && `Pronouns: ${pc.pronouns}`,
-    pc.characteristics && `Appearance: ${pc.characteristics}`,
-  ].filter(Boolean);
-
-  const pcSection = pcParts.length > 0
-    ? `\nThe person you are speaking with:\n${pcParts.join('\n')}`
-    : '';
+  // Player character summary (only when in conversation, not during world ticks)
+  let pcSection = '';
+  if (includePC) {
+    const pc = campaign.character;
+    const pcParts = [
+      pc.name && `Name: ${pc.name}`,
+      pc.callsign && `Callsign: ${pc.callsign}`,
+      pc.pronouns && `Pronouns: ${pc.pronouns}`,
+      pc.characteristics && `Appearance: ${pc.characteristics}`,
+    ].filter(Boolean);
+    pcSection = pcParts.length > 0
+      ? `\nThe person you are speaking with:\n${pcParts.join('\n')}`
+      : '';
+  }
 
   const roleInstructions = entityRoleInstructions(type, name);
 
@@ -424,9 +426,7 @@ Stay true to your disposition and goals. If you are suspicious, be suspicious. I
 Keep responses conversational and relatively brief — a few sentences to a short paragraph, like real dialogue.`;
 
     case 'settlement':
-      return `You represent the ambient life of ${name} — the sounds, the rumors, the mood, the bureaucracy, the crowds. When someone arrives or interacts with this place, describe what they experience. Speak as the place itself: the chatter at the bar, the announcements on the PA system, the graffiti on the walls, the feel of the air.
-
-You are not a single person. You are the collective texture of this location.`;
+      return `You represent ${name} as a living place. Write a very short scene (3-5 sentences) — a snippet of overheard conversation, a tense exchange between unnamed locals, a public announcement, or a rumor passing between workers. The scene should reflect the settlement's current mood, pressures, and troubles. Write it like a fragment of a screenplay or a radio intercept — raw and immediate. No narration, no scene-setting, just the moment itself.`;
 
     case 'planet':
       return `You are the world ${name} itself — its landscapes, atmosphere, weather, and dangers. Describe what someone experiences on your surface or in your orbit. You are not a character; you are an environment. Convey sensation: temperature, light, sound, the feel of the ground, the quality of the air.`;
