@@ -127,7 +127,7 @@
             <q-tooltip>Save result to most recent journal</q-tooltip>
           </q-btn>
 
-          <send-to-companion-btn v-if="data.result" :data="rollResultText" />
+          <send-to-companion-btn :data="rollResultText" />
         </div>
       </q-card-section>
     </q-card>

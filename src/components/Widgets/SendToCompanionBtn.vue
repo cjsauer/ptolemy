@@ -1,6 +1,6 @@
 <template>
-  <q-btn icon="mdi-chat" flat dense @click="sendToCompanion(data)">
-    <q-tooltip>Send to companion</q-tooltip>
+  <q-btn icon="mdi-chat" :label="label" :flat="!bordered" :outline="bordered" :dense="!bordered" @click="sendToCompanion(data)">
+    <q-tooltip v-if="!label">Send to companion</q-tooltip>
   </q-btn>
 </template>
 
@@ -15,6 +15,14 @@ export default defineComponent({
     data: {
       type: String,
       required: true,
+    },
+    bordered: {
+      type: Boolean,
+      default: false,
+    },
+    label: {
+      type: String,
+      default: '',
     },
   },
   setup() {
