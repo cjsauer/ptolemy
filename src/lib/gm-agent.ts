@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { ICampaign, IChatMessage, INPC, IPlanet, ISettlement, IStarship, IDerelict, ICreature, IFaction } from 'src/components/models';
 import * as tools from './gm-tools';
+import { starforged } from 'dataforged';
 
 // --- Agent event types for streaming to UI ---
 
@@ -42,7 +43,7 @@ WHAT YOU DO NOT DO:
 
 REACTING TO ROLL RESULTS:
 The player rolls their own dice and may share results with you. When you see a roll result:
-- Use lookup_move to check the move's strong hit / weak hit / miss outcomes if needed
+- Refer to the full move text in the moves reference below to understand the specific strong hit / weak hit / miss outcomes
 - These outcomes are creative prompts: "you succeed but at a cost" or "you fail and face a new danger"
 - Narrate what happens in the FICTION, not the mechanics
 - Strong hits: things go well, the fiction advances cleanly
@@ -77,6 +78,25 @@ Character and NPC Craft:
 Pacing:
 - Telescope between detail levels. Zoom in for tense moments, zoom out for travel.
 - If the player is setting up a new campaign, help creatively when asked — roll oracles, interpret results, suggest ideas. The player drives the process.`;
+
+// --- Generate full moves reference from dataforged ---
+
+function buildMovesReference(): string {
+  let output = '';
+  for (const cat of starforged['Move Categories']) {
+    output += `## ${cat.Name}\n\n`;
+    if (cat.Moves) {
+      for (const move of cat.Moves) {
+        const text = (move.Text || '').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+        output += `### ${move.Name}\n${text}\n\n`;
+      }
+    }
+  }
+  return output;
+}
+
+// Cache it since it never changes
+const MOVES_REFERENCE = buildMovesReference();
 
 // --- Tool definitions for the Anthropic API ---
 
@@ -532,6 +552,10 @@ export function buildPrompt(
     {
       type: 'text',
       text: SYSTEM_PROMPT,
+    },
+    {
+      type: 'text',
+      text: `<moves_reference>\n${MOVES_REFERENCE}\n</moves_reference>`,
       cache_control: { type: 'ephemeral' },
     },
   ];
