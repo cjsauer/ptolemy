@@ -155,7 +155,7 @@
             <q-icon name="settings" />
           </q-item-section>
           <q-item-section>
-            Claude GM Settings
+            Settings
             <q-tooltip>Configure Claude API key and model</q-tooltip>
           </q-item-section>
         </q-item>
@@ -378,7 +378,7 @@
     <q-dialog v-model="showSettings" :maximized="$q.platform.is.mobile">
       <q-card class="card-bg" style="min-width: 400px">
         <q-card-section class="row bg-secondary text-h5 justify-between">
-          <div class="col-grow sf-header">Claude GM Settings</div>
+          <div class="col-grow sf-header">Settings</div>
           <q-btn class="col-shrink" flat dense icon="close" @click="showSettings = false" />
         </q-card-section>
 
@@ -450,6 +450,34 @@
           </q-input>
         </q-card-section>
 
+        <q-separator class="q-my-sm" />
+
+        <q-card-section class="sf-header text-h6">Campaign Sync</q-card-section>
+
+        <q-card-section>
+          <div v-if="!driveSignedIn" class="column items-center q-gutter-sm">
+            <q-btn
+              label="Connect Google Drive"
+              icon="mdi-google-drive"
+              color="primary"
+              outline
+              :loading="driveLoading"
+              @click="driveSignIn"
+            />
+            <div class="text-caption text-grey">
+              Sync campaigns across devices via a hidden app folder in your Google Drive.
+            </div>
+          </div>
+          <div v-else class="column items-center q-gutter-sm">
+            <div class="text-positive"><q-icon name="mdi-check-circle" /> Connected to Google Drive</div>
+            <div class="row q-gutter-sm">
+              <q-btn label="Sync now" icon="mdi-sync" flat :loading="driveLoading" @click="driveSync" />
+              <q-btn label="Disconnect" icon="mdi-logout" flat @click="driveSignOut" />
+            </div>
+            <div v-if="driveSyncResult" class="text-caption text-grey">{{ driveSyncResult }}</div>
+          </div>
+        </q-card-section>
+
       </q-card>
     </q-dialog>
 
@@ -458,13 +486,14 @@
 </template>
 
 <script lang="ts">
-import { ref, defineComponent, computed } from 'vue';
+import { ref, defineComponent, computed, watch } from 'vue';
 
 import { useCampaign } from 'src/store/campaign';
 import { useConfig } from 'src/store/config';
 import { useAssets } from 'src/store/assets';
 import { useQuasar, scroll } from 'quasar';
 import Anthropic from '@anthropic-ai/sdk';
+import { loadGisScript, signIn, signOut, isSignedIn as driveIsSignedIn, sync as driveDoSync } from 'src/lib/gdrive-sync';
 import Oracles from 'src/components/Oracles/Oracles.vue';
 import Moves from 'src/components/Moves/Moves.vue';
 import Roller from 'src/components/Widgets/Roller.vue';
@@ -525,6 +554,9 @@ export default defineComponent({
     const showRoller = ref(false);
     const showAbout = ref(false);
     const showSettings = ref(false);
+    watch(showSettings, (val) => {
+      if (val) driveSignedIn.value = driveIsSignedIn();
+    });
     const testingApi = ref(false);
     const apiTestResult = ref<{ success: boolean; message: string } | null>(null);
     const modelOptions = [
@@ -554,6 +586,54 @@ export default defineComponent({
         testingApi.value = false;
       }
     };
+    // Google Drive sync
+    const driveSignedIn = ref(driveIsSignedIn());
+    const driveLoading = ref(false);
+    const driveSyncResult = ref('');
+
+    const driveSignIn = async () => {
+      driveLoading.value = true;
+      try {
+        await loadGisScript();
+        await signIn();
+        driveSignedIn.value = true;
+        // Auto-sync on connect
+        await driveSync();
+      } catch (err) {
+        console.error('[Drive]', err);
+      } finally {
+        driveLoading.value = false;
+      }
+    };
+
+    const driveSignOut = () => {
+      signOut();
+      driveSignedIn.value = false;
+      driveSyncResult.value = '';
+    };
+
+    const driveSync = async () => {
+      driveLoading.value = true;
+      driveSyncResult.value = '';
+      try {
+        const result = await driveDoSync();
+        const parts = [];
+        if (result.updated > 0) parts.push(`${result.updated} updated from Drive`);
+        if (result.pushed > 0) parts.push(`${result.pushed} pushed to Drive`);
+        driveSyncResult.value = parts.length > 0
+          ? `Synced ${result.total} campaign(s). ${parts.join(', ')}.`
+          : `${result.total} campaign(s) in sync.`;
+        // Reload current campaign in case it was updated
+        if (result.updated > 0) {
+          await campaign.populateStore();
+        }
+      } catch (err) {
+        driveSyncResult.value = `Sync failed: ${err instanceof Error ? err.message : 'Unknown error'}`;
+      } finally {
+        driveLoading.value = false;
+      }
+    };
+
     const crt = computed((): boolean => {
       return /bebop/i.test(campaign.data.sectors[config.data.sector].name);
     });
@@ -614,6 +694,12 @@ export default defineComponent({
       btnSize,
       crt,
       scrollTo,
+      driveSignedIn,
+      driveLoading,
+      driveSyncResult,
+      driveSignIn,
+      driveSignOut,
+      driveSync,
     };
   },
 });

@@ -11,6 +11,7 @@ import { useOracles } from './store/oracles';
 
 import { debounce, useQuasar } from 'quasar';
 import { sleep } from './lib/util';
+import { isSignedIn, wasSignedIn, pushCampaign, sync as driveSync } from './lib/gdrive-sync';
 
 export default defineComponent({
   name: 'App',
@@ -36,6 +37,34 @@ export default defineComponent({
     onMounted(async () => {
       await initialiseData();
       loaded.value = true;
+
+      // Auto-sync if we have a valid token from localStorage
+      if (isSignedIn()) {
+        try {
+          const result = await driveSync();
+          if (result.updated > 0) {
+            await campaign.load(config.data.current);
+            console.log(`[Drive] Pulled ${result.updated} updated campaign(s)`);
+          }
+        } catch (e) {
+          console.log('[Drive] Auto-sync failed:', e);
+          $q.notify({
+            message: 'Drive sync token expired. Reconnect in Settings.',
+            color: 'warning',
+            icon: 'mdi-google-drive',
+            position: 'top',
+            timeout: 5000,
+          });
+        }
+      } else if (wasSignedIn()) {
+        $q.notify({
+          message: 'Drive sync inactive — token expired. Reconnect in Settings.',
+          color: 'warning',
+          icon: 'mdi-google-drive',
+          position: 'top',
+          timeout: 5000,
+        });
+      }
     });
 
     watch(
@@ -58,6 +87,9 @@ export default defineComponent({
       debounce(async () => {
         config.data.saving = true;
         await campaign.save();
+        if (isSignedIn()) {
+          pushCampaign(campaign.data).catch((err) => console.log('[Drive] Push failed:', err));
+        }
         await sleep(200);
         config.data.saving = false;
       }, 3000),

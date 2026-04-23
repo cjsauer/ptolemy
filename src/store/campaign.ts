@@ -17,6 +17,7 @@ import { useConfig } from './config';
 import { exportFile } from 'quasar';
 import { db } from 'src/lib/db';
 import { now } from 'src/lib/util';
+import { isSignedIn, deleteCampaignFromDrive } from 'src/lib/gdrive-sync';
 
 export const useCampaign = defineStore({
   id: 'campaign',
@@ -211,6 +212,10 @@ export const useCampaign = defineStore({
         }
 
         await config.updateIndex();
+
+        if (isSignedIn()) {
+          deleteCampaignFromDrive(id).catch(() => { /* silent */ });
+        }
       } catch (err) {
         console.log(err);
       }
