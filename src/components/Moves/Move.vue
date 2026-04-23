@@ -8,7 +8,7 @@
   >
     <q-card class="card-bg">
       <q-card-section>
-        <send-to-companion-btn bordered label="Send to companion" :data="'[Move: ' + move.Name + ']'" class="q-mb-sm" />
+        <send-to-companion-btn bordered label="Send to companion" :data="'[Move: ' + moveType + ' / ' + move.Name + ']'" class="q-mb-sm" />
         <div v-html="mdToHtml(move.Text)" />
       </q-card-section>
       <q-card-section v-if="move.Oracles" class="q-gutter-md">
@@ -21,7 +21,7 @@
         />
         <q-btn label="Clear results" outline @click="results = []" />
         <q-btn icon="save" outline @click="save" />
-        <send-to-companion-btn bordered :data="'[' + move.Name + ': ' + results.join(', ') + ']'" />
+        <send-to-companion-btn bordered :data="'[' + moveType + ' / ' + move.Name + ': ' + results.join(', ') + ']'" />
         <div>
           <span v-for="(res, index) in results" :key="index" class="q-pr-md" v-html="res"></span>
         </div>

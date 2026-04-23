@@ -630,14 +630,21 @@ export function updateSectorObject(
   throw new Error(`${objectType} not found: "${name}"`);
 }
 
-export function lookupMove(_campaign: ICampaign, moveId: string): { name: string; text: string; oracles?: string[] } {
-  // Search dataforged moves
+export function lookupMove(_campaign: ICampaign, moveId: string): { name: string; category: string; text: string; oracles?: string[] } {
+  // Support "Category / Name" format (e.g. "Scene Challenge / Face Danger")
+  const slashParts = moveId.split('/').map(s => s.trim());
+  const hasCategory = slashParts.length >= 2 && !moveId.startsWith('Starforged');
+  const searchCategory = hasCategory ? slashParts[0].toLowerCase() : null;
+  const searchName = hasCategory ? slashParts.slice(1).join('/').toLowerCase() : moveId.toLowerCase();
+
   for (const category of starforged['Move Categories']) {
+    if (searchCategory && !category.Name.toLowerCase().includes(searchCategory)) continue;
     if (category.Moves) {
       for (const move of category.Moves) {
-        if (move.$id === moveId || move.Name.toLowerCase() === moveId.toLowerCase()) {
+        if (move.$id === moveId || move.Name.toLowerCase() === searchName) {
           return {
             name: move.Name,
+            category: category.Name,
             text: move.Text || '',
             oracles: move.Oracles,
           };
