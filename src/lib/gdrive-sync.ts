@@ -110,6 +110,10 @@ export function loadGisScript(): Promise<void> {
   });
 }
 
+// --- File ID cache (avoids re-querying Drive for known files) ---
+
+const fileIdCache = new Map<string, string>();
+
 // --- Drive helpers ---
 
 async function driveRequest(url: string, options: RequestInit = {}): Promise<Response> {
@@ -124,21 +128,31 @@ async function driveRequest(url: string, options: RequestInit = {}): Promise<Res
   return resp;
 }
 
-// Find a file by name in appdata
+// Find a file by name in appdata (cached)
 async function findFile(name: string): Promise<string | null> {
+  const cached = fileIdCache.get(name);
+  if (cached) return cached;
+
   const resp = await driveRequest(
     `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name='${name}'&fields=files(id)`
   );
   const data = (await resp.json()) as { files: { id: string }[] };
-  return data.files.length > 0 ? data.files[0].id : null;
+  if (data.files.length > 0) {
+    fileIdCache.set(name, data.files[0].id);
+    return data.files[0].id;
+  }
+  return null;
 }
 
-// List files matching a prefix
+// List files matching a prefix (also populates cache)
 async function listFiles(prefix: string): Promise<{ id: string; name: string }[]> {
   const resp = await driveRequest(
     `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name contains '${prefix}'&fields=files(id,name)&pageSize=1000`
   );
   const data = (await resp.json()) as { files: { id: string; name: string }[] };
+  for (const f of data.files) {
+    fileIdCache.set(f.name, f.id);
+  }
   return data.files;
 }
 
@@ -174,15 +188,17 @@ async function createFile(name: string, data: unknown): Promise<string> {
     { method: 'POST', body: form }
   );
   const result = (await resp.json()) as { id: string };
+  fileIdCache.set(name, result.id);
   return result.id;
 }
 
 // Delete a file
-async function deleteFile(fileId: string): Promise<void> {
+async function deleteFile(fileId: string, name?: string): Promise<void> {
   await driveRequest(
     `https://www.googleapis.com/drive/v3/files/${fileId}`,
     { method: 'DELETE' }
   );
+  if (name) fileIdCache.delete(name);
 }
 
 // --- File naming ---
@@ -224,12 +240,12 @@ export async function pushCampaign(campaign: ICampaign): Promise<void> {
     await createFile(fileName, stripped);
   }
 
-  // Push each session separately
+  // Push sessions in parallel
   if (campaign.sessions) {
-    for (const session of campaign.sessions) {
-      if (session.chat.length === 0) continue; // skip empty sessions
-      await pushSession(campaign.id, session);
-    }
+    const sessionPushes = campaign.sessions
+      .filter(s => s.chat.length > 0)
+      .map(s => pushSession(campaign.id, s));
+    await Promise.all(sessionPushes);
   }
 }
 
@@ -248,15 +264,17 @@ async function pushSession(campaignId: string, session: ISession): Promise<void>
 async function pullSessions(campaignId: string): Promise<ISession[]> {
   const prefix = `ptolemy-session-${campaignId}`;
   const files = await listFiles(prefix);
-  const sessions: ISession[] = [];
-  for (const file of files) {
+  const sessionPromises = files.map(async (file) => {
     try {
       const session = await readFile<ISession>(file.id);
-      if (session && session.id) sessions.push(session);
+      if (session && session.id) return session;
     } catch (e) {
       console.log(`[Drive] Failed to read session ${file.name}:`, e);
     }
-  }
+    return null;
+  });
+  const results = await Promise.all(sessionPromises);
+  const sessions = results.filter((s): s is ISession => s !== null);
   return sessions;
 }
 
@@ -329,13 +347,12 @@ export async function sync(): Promise<{ total: number; updated: number; pushed: 
 
 export async function deleteCampaignFromDrive(id: string): Promise<void> {
   // Delete campaign file
-  const campaignFileId = await findFile(campaignFileName(id));
-  if (campaignFileId) await deleteFile(campaignFileId);
+  const cfName = campaignFileName(id);
+  const campaignFileId = await findFile(cfName);
+  if (campaignFileId) await deleteFile(campaignFileId, cfName);
 
-  // Delete all session files
+  // Delete all session files in parallel
   const prefix = `ptolemy-session-${id}`;
   const sessionFiles = await listFiles(prefix);
-  for (const file of sessionFiles) {
-    await deleteFile(file.id);
-  }
+  await Promise.all(sessionFiles.map(f => deleteFile(f.id, f.name)));
 }
