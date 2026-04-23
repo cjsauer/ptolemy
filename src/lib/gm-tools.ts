@@ -766,7 +766,8 @@ export function burnMomentum(campaign: ICampaign): { newMomentum: number; reset:
   return { newMomentum: mom.value, reset: mom.reset };
 }
 
-export function getCampaignSetupGuide(): { guide: string } {
+// eslint-disable-next-line
+function _removedCampaignSetupGuide(): { guide: string } {
   return { guide: `CAMPAIGN SETUP PROCEDURE (adapted from Starforged Chapter 2)
 
 This should feel like a conversation, not a form. Go through each step at a natural pace — don't rush. Let the player make choices and ask questions. The existing UI (Character tab, Sector tab, Challenges tab) updates in real time as you populate data via tools.

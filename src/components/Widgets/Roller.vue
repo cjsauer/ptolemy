@@ -126,6 +126,8 @@
           <q-btn class="col-shrink" dense flat icon="save" @click="saveResult" :size="btnSize">
             <q-tooltip>Save result to most recent journal</q-tooltip>
           </q-btn>
+
+          <send-to-companion-btn v-if="data.result" :data="rollResultText" />
         </div>
       </q-card-section>
     </q-card>
@@ -141,8 +143,10 @@ import { useCampaign } from 'src/store/campaign';
 
 import { d, moveRoll, NewRollData, updateResults } from 'src/lib/roll';
 import { icon } from 'src/lib/icons';
+import SendToCompanionBtn from './SendToCompanionBtn.vue';
 
 export default defineComponent({
+  components: { SendToCompanionBtn },
   name: 'Roller',
   props: {
     modelValue: {
@@ -270,6 +274,17 @@ export default defineComponent({
       );
     };
 
+    const statName = computed(() => {
+      if (!select.value || select.value === 'other') return 'other';
+      return select.value.split(':')[0];
+    });
+
+    const rollResultText = computed(() => {
+      if (!data.value.result) return '';
+      const match = data.value.challenge.match ? ' (MATCH)' : '';
+      return `[ROLL] +${statName.value}(${attribute.value}) + ${adds.value} = d6(${data.value.action.die}) + ${attribute.value} + ${adds.value} = ${data.value.action.score} vs ${data.value.challenge.die1.roll} & ${data.value.challenge.die2.roll} → ${data.value.result}${match}`;
+    });
+
     const mInc = () => {
       if (campaign.data.character.tracks.momentum.value < campaign.data.character.tracks.momentum.max)
         campaign.data.character.tracks.momentum.value++;
@@ -301,6 +316,8 @@ export default defineComponent({
       mDec,
 
       adIcon,
+
+      rollResultText,
 
       d100,
       d100Res,

@@ -4,19 +4,10 @@
     <div ref="messageList" class="col q-pa-md message-list">
       <div v-if="messages.length === 0" class="text-center text-grey q-mt-xl">
         <q-icon name="mdi-compass-rose" size="64px" class="q-mb-md" color="primary" />
-        <div class="text-h6 sf-header">Begin your adventure</div>
+        <div class="text-h6 sf-header">Creative Companion</div>
         <div class="text-caption q-mt-sm q-mb-md">
-          Describe what your character does, and the GM will guide the story.
+          Roll oracles, voice NPCs, build the world. You handle the rules and dice.
         </div>
-        <q-btn
-          v-if="isFreshCampaign"
-          label="Set up new campaign"
-          color="primary"
-          outline
-          icon="mdi-rocket-launch"
-          :disable="chat.thinking"
-          @click="startCampaignSetup"
-        />
       </div>
 
       <chat-message v-for="(msg, i) in messages" :key="i" :msg="msg" @rewind="rewindTo(i)" />
@@ -39,7 +30,7 @@
       <!-- Thinking indicator -->
       <div v-if="chat.thinking && !chat.streaming" class="text-grey q-my-sm q-ml-sm">
         <q-spinner-dots size="24px" color="primary" />
-        <span class="q-ml-sm text-caption">The GM is thinking...</span>
+        <span class="q-ml-sm text-caption">Thinking...</span>
       </div>
     </div>
 
@@ -335,13 +326,6 @@ export default defineComponent({
       params: Object.keys(((t.input_schema as Record<string, unknown>).properties || {}) as Record<string, unknown>),
     })), null, 2));
 
-    const isFreshCampaign = computed(() => {
-      const stats = campaign.data.character.stats;
-      const hasStats = stats.edge + stats.heart + stats.iron + stats.shadow + stats.wits > 0;
-      const hasAssets = campaign.data.character.assets.length > 0;
-      return !hasStats && !hasAssets;
-    });
-
     // Session deletion
     const showDeleteSession = ref(false);
     const deleteSessionId = ref('');
@@ -401,11 +385,6 @@ export default defineComponent({
       if (abortController) {
         abortController.abort();
       }
-    };
-
-    const startCampaignSetup = () => {
-      chat.inputText = "Let's set up a new campaign! Walk me through the Starforged Chapter 2 procedure.";
-      void send();
     };
 
     const renderedStreaming = computed(() => {
@@ -541,8 +520,6 @@ export default defineComponent({
       newSession,
       switchToSession,
       renderedStreaming,
-      isFreshCampaign,
-      startCampaignSetup,
       stop,
       rewindTo,
       rewindTarget,

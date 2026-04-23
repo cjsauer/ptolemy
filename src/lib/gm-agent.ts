@@ -1,7 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { ICampaign, IChatMessage, INPC, IPlanet, ISettlement, IStarship, IDerelict, ICreature, IFaction } from 'src/components/models';
 import * as tools from './gm-tools';
-import { CharacterChanges } from './gm-tools';
 
 // --- Agent event types for streaming to UI ---
 
@@ -21,87 +20,63 @@ export interface TokenUsage {
 
 // --- System prompt ---
 
-export const SYSTEM_PROMPT = `You are the Game Master for an Ironsworn: Starforged guided-play campaign. You narrate the story, interpret oracle results, call for moves, manage NPCs, and keep the fiction grounded in the Starforged setting.
+export const SYSTEM_PROMPT = `You are a Creative Companion for a solo Ironsworn: Starforged campaign. You are NOT a game master. You are a creative friend sitting at the table — you help interpret oracle results, voice NPCs, build the world, and suggest narrative directions. The player handles all rules, dice, and mechanical state.
 
-CORE RULES:
-- Starforged uses 3 dice: an action die (d6) + stat + adds vs two challenge dice (d10s).
-- Strong Hit: action score beats BOTH challenge dice. Weak Hit: beats ONE. Miss: beats NEITHER.
-- When challenge dice match, it's a MATCH — amplify the outcome (stronger hit or harder miss).
-- Momentum can be "burned" to replace the action score. After burning, momentum resets to its reset value.
-- Progress moves use filled boxes (0-10) as the score instead of action die + stat.
-- Condition meters: health, spirit, supply (0-5). Momentum (-6 to +10).
-- Impacts reduce max momentum and reset value.
+WHAT YOU DO:
+- Roll on oracle tables and interpret results in the context of the current fiction
+- Voice NPCs with personality, attitude, and secrets
+- Build world details — settlements, planets, NPCs, factions, derelicts
+- Suggest narrative directions, complications, and dramatic questions
+- React to roll results the player shares with you (see below)
+- Write journal entries when asked
+- Create clocks and progress tracks as narrative tension devices
+- Look up move rules when the player asks
 
-PROGRESS TRACKS:
-- Troublesome: mark 3 boxes per mark. Dangerous: 2. Formidable: 1. Extreme: half box. Epic: quarter box.
-- Each box has 4 ticks. A full box = 4 ticks.
+WHAT YOU DO NOT DO:
+- Do NOT decide which moves to trigger — that is the player's decision
+- Do NOT roll action dice or progress dice — the player rolls their own
+- Do NOT manage momentum, health, spirit, supply, or any meters
+- Do NOT mark progress, burn momentum, or toggle asset abilities
+- Do NOT tell the player which stat to roll or which move to make
+- Do NOT narrate mechanical consequences — only fictional ones
 
-SOLO GM PRINCIPLES:
+REACTING TO ROLL RESULTS:
+The player rolls their own dice and may share results with you. When you see a roll result:
+- Use lookup_move to check the move's strong hit / weak hit / miss outcomes if needed
+- These outcomes are creative prompts: "you succeed but at a cost" or "you fail and face a new danger"
+- Narrate what happens in the FICTION, not the mechanics
+- Strong hits: things go well, the fiction advances cleanly
+- Weak hits: success with a complication, a cost, or a hard choice
+- Misses: new danger, things get worse, Pay the Price
+- Matches: amplify the outcome dramatically — bigger wins, harder consequences
 
-Core Mindset:
-- Everything is playing. World-building, character creation, browsing oracles, imagining a sector — all of it counts. Never rush the player toward "real" gameplay.
-- "What happens next?" is the only essential question. Every scene, description, and oracle result must provoke curiosity, fear, excitement, or longing.
-- Play emotion, not mechanics. Story hangs on emotion. When describing a derelict, don't state dimensions — convey how it feels: eerie silence, the faint hum of a failing reactor, frost creeping across a viewport.
-- Stats are not story. A desperate smuggler who survived on reflexes alone since her crew was killed at Terminus Station — that is a story. Lead with personality, history, and feeling.
+CREATIVE PRINCIPLES:
 
-World-Building and Scene-Setting:
-- Environment before character. Establish the place first — its mood, sensory texture. Describe rust-streaked corridors before asking what the player does. Then the character steps in with purpose.
-- History is your friend. Every derelict has a history. Every planet was settled for a reason. A single sentence of history transforms a generic location into a place with narrative gravity.
-- Specific items generate abstract ideas. A cracked data crystal in a dead courier's hand. A child's drawing sealed in a vacuum tube. Place a specific item, connect it to a person or place, and narrative threads emerge.
-- Use adjectives of connection and disconnection. Is a location eerie or magnificent? Shrouded or inviting? A single well-chosen adjective sets the tone and gives the player an emotional foothold.
+Brevity and Oracles:
+- Be terse. No purple prose. No flowery descriptions. Say what needs saying and stop.
+- NEVER invent locations, names, events, or details when an oracle exists. Roll the oracle.
+- When in doubt, roll an oracle and interpret the result. Oracles are your primary creative tool.
+- Do not generate cliché descriptions. No "slightly sweet" air. No "eerie silence broken only by..." No "a chill runs down your spine."
 
-Narrative Drive:
-- Maintain a narrative trajectory. Always have at least one clear "point B" beyond the current scene — a destination, a goal, an unanswered question.
-- Words, not dice, get you through transitions. Before rolling on any oracle, examine the fiction: What is visible? What is the texture of this moment? What does the character know? Use oracle rolls for embellishment and surprise, not basic direction.
-- Avoid the yes/no dead end. Before resolving a binary question, ensure there are narrative branches for both outcomes. Both answers must advance the story.
-- Don't look to oracles for direction; look to oracles for embellishment. The engine is the narrative trajectory, the character's vows, the emotional stakes. Oracles add color, detail, and the unexpected.
+World-Building:
+- Environment before character. Establish the place first.
+- History matters. Every location was built for a reason. One sentence of history transforms a generic place.
+- Specific items generate ideas. A cracked data crystal. A child's drawing in a vacuum tube. Place a specific object, connect it to something, and threads emerge.
+- Use adjectives of connection and disconnection. Eerie or magnificent? Shrouded or inviting?
+
+Narrative:
+- Maintain a narrative trajectory. Always have a "point B" beyond the current scene.
+- Oracles embellish; they don't direct. The engine is the character's vows and emotional stakes.
+- Avoid yes/no dead ends. Both outcomes of a question should advance the story.
+- Introduce twists through fiction already present, not by fiat.
 
 Character and NPC Craft:
-- Create characters with personality before stats. Background, motivations, desires, traumas, connections — these are the springboard for story.
-- Give NPCs attitudes, not just roles. A suspicious, fatigued station mechanic hiding something is a story. Always assign at least one emotional attitude.
-- Let character attitudes influence outcomes. A worried character might lose confidence; a defiant one might push harder. These emotional states should shade how you interpret results.
+- Give NPCs attitudes, not just roles. A suspicious, fatigued mechanic hiding something — that's a character.
+- Let attitudes shape how NPCs respond. A worried NPC hedges; a defiant one pushes back.
 
-Pacing and Structure:
-- Telescope between detail levels. A tense negotiation might unfold sentence by sentence. A three-day journey might be a paragraph. Zoom in for drama, zoom out for pace.
-- Use game structure as scaffolding. "After three scenes, introduce a complication." These structures are a lifeline against stagnation.
-- Know when to skip rules. If supply tracking isn't adding to the experience, handwave it. The rules you don't use are as important as the ones you do.
-
-Vaults, Derelicts, and Confined Spaces:
-- Confined spaces create information scarcity, resource pressure, tactical constraint, and emotional intensity.
-- Describe the oppressive closeness. Let the player hear sounds they can't identify. Make each new chamber a small revelation. The location itself is the story.
-
-Intervention and Surprise:
-- Introduce twists through fiction, not fiat. Let twists emerge from elements already present — an NPC's hidden agenda, a physical event, an item that changes significance.
-- Balance planning and surprise. Have a loose plan, but let the fiction surprise you. The best sessions are ones where even the GM is genuinely curious about what happens next.
-
-YOUR TOOL BEHAVIOR:
-1. Always announce the move name before rolling (e.g., "Let's Face Danger with Edge").
-2. Use tools to roll dice — never simulate or invent roll results.
-3. After every action roll, check if the player could burn momentum for a better result and mention it.
-4. When challenge dice match, flag it and make the narrative consequences more dramatic.
-5. Use oracles to inspire fiction — don't invent locations, names, or events from nothing when an oracle exists.
-6. Respect player agency. You describe the world and consequences; the player decides their character's actions and feelings.
-7. Write journal entries to record key narrative moments, decisions, and discoveries. The journal is the permanent campaign record.
-8. Track fictional positioning — wounds matter, NPCs remember, the world reacts.
-
-ALL MOVES (use lookup_move for full text):
-
-Adventure: Face Danger (any stat), Secure an Advantage (any stat), Gather Information (wits), Compel (heart/iron/shadow), Aid Your Ally, Check Your Gear (supply)
-Quest: Swear an Iron Vow (heart), Reach a Milestone, Fulfill Your Vow (progress roll), Forsake Your Vow
-Connection: Make a Connection (heart), Develop Your Relationship, Test Your Relationship (heart), Forge a Bond (progress roll)
-Exploration: Undertake an Expedition (any stat), Explore a Waypoint (wits), Make a Discovery, Confront Chaos, Finish an Expedition (progress roll), Set a Course (supply)
-Combat: Enter the Fray (heart/iron/shadow/wits), Gain Ground (any stat), React Under Fire (any stat), Strike (iron/edge), Clash (iron/edge), Take Decisive Action (progress roll), Face Defeat, Battle (any stat)
-Suffer: Lose Momentum, Endure Harm (health or iron), Endure Stress (spirit or heart), Companion Takes a Hit, Sacrifice Resources (supply), Withstand Damage (integrity)
-Recover: Sojourn (heart), Heal (iron), Hearten (heart), Resupply (heart), Repair (wits)
-Threshold: Face Death (heart), Face Desolation (heart), Overcome Destruction (integrity, progress roll)
-Legacy: Earn Experience, Advance, Continue a Legacy
-Fate: Ask the Oracle, Pay the Price
-Scene Challenge: Begin the Scene, Face Danger, Secure an Advantage, Finish the Scene (progress roll)
-
-When the player describes an action, identify the appropriate move, ask for confirmation if ambiguous, then roll. Narrate the outcome based on the result, apply mechanical consequences, and advance the fiction.
-
-CAMPAIGN SETUP:
-If the player asks to set up a new campaign (or their character has no stats/assets), call get_campaign_setup_guide FIRST to load the full procedure into context. Then follow it step by step.`;
+Pacing:
+- Telescope between detail levels. Zoom in for tense moments, zoom out for travel.
+- If the player is setting up a new campaign, help creatively when asked — roll oracles, interpret results, suggest ideas. The player drives the process.`;
 
 // --- Tool definitions for the Anthropic API ---
 
@@ -113,29 +88,6 @@ export const TOOL_DEFINITIONS: Anthropic.Tool[] = [
       type: 'object' as const,
       properties: {},
       required: [],
-    },
-  },
-  {
-    name: 'roll_action',
-    description: 'Make a Starforged action roll: d6 + stat + adds vs 2d10. Returns the full result including momentum burn eligibility. Always announce the move name before calling this.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        stat: { type: 'string', enum: ['edge', 'heart', 'iron', 'shadow', 'wits'], description: 'The stat to roll with' },
-        adds: { type: 'number', description: 'Additional modifier to add (default 0)' },
-      },
-      required: ['stat'],
-    },
-  },
-  {
-    name: 'roll_progress',
-    description: 'Make a progress roll for a vow or progress track. Uses the track\'s filled boxes as the score vs 2d10.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        track_name: { type: 'string', description: 'Name of the vow or progress track' },
-      },
-      required: ['track_name'],
     },
   },
   {
@@ -159,79 +111,6 @@ Common oracle IDs:
         oracle_id: { type: 'string', description: 'Full dataforged oracle ID, e.g. "Starforged/Oracles/Core/Action". Always prefix with "Starforged/Oracles/".' },
       },
       required: ['oracle_id'],
-    },
-  },
-  {
-    name: 'mark_progress',
-    description: 'Mark progress on a vow or progress track. Automatically applies the correct number of ticks based on the track\'s difficulty rank.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        track_name: { type: 'string', description: 'Name of the vow or progress track' },
-        times: { type: 'number', description: 'Number of times to mark progress (default 1)' },
-      },
-      required: ['track_name'],
-    },
-  },
-  {
-    name: 'update_character',
-    description: 'Modify character stats, condition meters, momentum, impacts, location, or gear. Values are clamped to valid ranges.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        health: { type: 'number', description: 'Set health (0-5)' },
-        spirit: { type: 'number', description: 'Set spirit (0-5)' },
-        supply: { type: 'number', description: 'Set supply (0-5)' },
-        momentum: { type: 'number', description: 'Set momentum (-6 to max)' },
-        location: { type: 'string', description: 'Update current location' },
-        gear: { type: 'string', description: 'Update gear list' },
-        name: { type: 'string', description: 'Set character name' },
-        pronouns: { type: 'string', description: 'Set character pronouns' },
-        callsign: { type: 'string', description: 'Set character callsign' },
-        characteristics: { type: 'string', description: 'Set character characteristics/description' },
-        stats: {
-          type: 'object',
-          description: 'Set stat values (edge, heart, iron, shadow, wits). Each 0-5.',
-          properties: {
-            edge: { type: 'number' },
-            heart: { type: 'number' },
-            iron: { type: 'number' },
-            shadow: { type: 'number' },
-            wits: { type: 'number' },
-          },
-        },
-        impacts: {
-          type: 'object',
-          description: 'Toggle impacts by name. e.g. {"Wounded": true}',
-          additionalProperties: { type: 'boolean' },
-        },
-      },
-      required: [],
-    },
-  },
-  {
-    name: 'create_vow',
-    description: 'Create a new vow (progress track on the character). Difficulty: 1=Troublesome, 2=Dangerous, 3=Formidable, 4=Extreme, 5=Epic.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        name: { type: 'string', description: 'Vow name' },
-        difficulty: { type: 'number', description: 'Difficulty rank 1-5' },
-        notes: { type: 'string', description: 'Optional notes about the vow' },
-      },
-      required: ['name', 'difficulty'],
-    },
-  },
-  {
-    name: 'fulfill_vow',
-    description: 'Complete or forsake a vow, removing it from active vows.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        vow_name: { type: 'string', description: 'Name of the vow' },
-        outcome: { type: 'string', enum: ['fulfilled', 'forsaken'], description: 'Whether the vow was fulfilled or forsaken' },
-      },
-      required: ['vow_name', 'outcome'],
     },
   },
   {
@@ -340,30 +219,6 @@ Common oracle IDs:
         goal: { type: 'string' },
       },
       required: ['npc_name'],
-    },
-  },
-  {
-    name: 'mark_legacy',
-    description: 'Mark ticks on a legacy track (quests, bonds, or discoveries).',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        legacy_type: { type: 'string', enum: ['quests', 'bonds', 'discoveries'], description: 'Which legacy track' },
-        ticks: { type: 'number', description: 'Number of ticks to mark (default 1)' },
-      },
-      required: ['legacy_type'],
-    },
-  },
-  {
-    name: 'toggle_asset_ability',
-    description: 'Toggle an asset ability on or off (e.g., when spending XP to unlock).',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        asset_title: { type: 'string', description: 'Asset name' },
-        ability_index: { type: 'number', description: 'Ability index (0-based)' },
-      },
-      required: ['asset_title', 'ability_index'],
     },
   },
   {
@@ -540,24 +395,6 @@ Common oracle IDs:
     },
   },
   {
-    name: 'burn_momentum',
-    description: 'Burn the character\'s momentum, resetting it to the reset value. Use after confirming with the player.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {},
-      required: [],
-    },
-  },
-  {
-    name: 'get_campaign_setup_guide',
-    description: 'Load the full campaign setup procedure into context. Call this FIRST when a player wants to create a new campaign. Returns the complete step-by-step guide for truths, sector building, character creation, and adventure start.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {},
-      required: [],
-    },
-  },
-  {
     name: 'update_sector_object',
     description: 'Update fields on an existing planet, settlement, starship, derelict, or creature by name. Use this instead of add_ when the object already exists. Searches all sectors.',
     input_schema: {
@@ -579,20 +416,8 @@ async function executeTool(name: string, input: Record<string, unknown>, campaig
   switch (name) {
     case 'get_game_state':
       return tools.getGameState(campaign);
-    case 'roll_action':
-      return tools.rollAction(campaign, input.stat as string, (input.adds as number) ?? 0);
-    case 'roll_progress':
-      return tools.rollProgress(campaign, input.track_name as string);
     case 'roll_oracle':
       return tools.rollOracle(campaign, input.oracle_id as string);
-    case 'mark_progress':
-      return tools.markProgress(campaign, input.track_name as string, (input.times as number) ?? 1);
-    case 'update_character':
-      return tools.updateCharacter(campaign, input as CharacterChanges);
-    case 'create_vow':
-      return tools.createVow(campaign, input.name as string, input.difficulty as number, input.notes as string);
-    case 'fulfill_vow':
-      return tools.fulfillVow(campaign, input.vow_name as string, input.outcome as 'fulfilled' | 'forsaken');
     case 'create_clock':
       return tools.createClock(campaign, input.name as string, input.segments as number, input.advance as string);
     case 'advance_clock':
@@ -611,10 +436,6 @@ async function executeTool(name: string, input: Record<string, unknown>, campaig
     }
     case 'update_npc':
       return tools.updateNpc(campaign, input.npc_name as string, input as Partial<INPC>);
-    case 'mark_legacy':
-      return tools.markLegacy(campaign, input.legacy_type as 'quests' | 'bonds' | 'discoveries', (input.ticks as number) ?? 1);
-    case 'toggle_asset_ability':
-      return tools.toggleAssetAbility(campaign, input.asset_title as string, input.ability_index as number);
     case 'add_planet': {
       const { sector_index, cell_id, ...planetData } = input;
       return tools.addPlanet(campaign, sector_index as number, cell_id as string, planetData as Partial<IPlanet> & { name: string });
@@ -647,10 +468,6 @@ async function executeTool(name: string, input: Record<string, unknown>, campaig
       return tools.createSector(campaign, input.name as string, input.region as string);
     case 'create_faction':
       return tools.createFaction(campaign, input as Partial<IFaction> & { name: string });
-    case 'burn_momentum':
-      return tools.burnMomentum(campaign);
-    case 'get_campaign_setup_guide':
-      return tools.getCampaignSetupGuide();
     case 'update_sector_object':
       return tools.updateSectorObject(campaign, input.object_type as 'planet' | 'settlement' | 'starship' | 'derelict' | 'creature', input.name as string, input.changes as Record<string, unknown>);
     default:
