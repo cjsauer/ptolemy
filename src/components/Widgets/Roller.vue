@@ -20,7 +20,7 @@
         <q-btn class="col-shrink" dense flat icon="mdi-backspace-outline" @click="d6Res = 0" :size="btnSize" />
       </q-card-section>
 
-      <q-card-section class="q-pa-sm" v-if="data.result">
+      <q-card-section class="q-pa-sm" v-if="data.result || rolling">
         <div class="row text-center text-h6 items-center justify-center q-mb-sm">
           <div :class="data.action.color">
             {{ data.result }}
@@ -29,7 +29,7 @@
           </div>
         </div>
 
-        <div class="row items-center justify-between text-h6">
+        <div class="row items-center justify-between text-h6" :class="{ 'dice-tumble': rolling }">
           <q-btn v-if="!burnt" :icon="adIcon" size="md" flat dense @click="reroll(true, false, false)">
             <q-tooltip>Reroll Action die</q-tooltip>
           </q-btn>
@@ -143,6 +143,7 @@ import { useCampaign } from 'src/store/campaign';
 
 import { d, moveRoll, NewRollData, updateResults } from 'src/lib/roll';
 import { icon } from 'src/lib/icons';
+import { animateRoll } from 'src/lib/dice-animation';
 import SendToCompanionBtn from './SendToCompanionBtn.vue';
 
 export default defineComponent({
@@ -213,10 +214,19 @@ export default defineComponent({
     );
 
     const data = ref(NewRollData());
+    const rolling = ref(false);
+
     const roll = () => {
       burnt.value = false;
       if (select.value === 'other') attribute.value = otherAttr.value;
-      data.value = moveRoll(attribute.value, adds.value, campaign.data.character.tracks.momentum.value);
+      const mom = campaign.data.character.tracks.momentum.value;
+      const finalResult = moveRoll(attribute.value, adds.value, mom);
+      const randomRoll = () => {
+        const r = moveRoll(attribute.value, adds.value, mom);
+        r.result = '';
+        return r;
+      };
+      void animateRoll(data, rolling, randomRoll, finalResult);
     };
 
     const burnt = ref(false);
@@ -239,10 +249,12 @@ export default defineComponent({
     });
 
     const d100Res = ref(0);
-    const d100 = () => (d100Res.value = d(100));
+    const d100Rolling = ref(false);
+    const d100 = () => { void animateRoll(d100Res, d100Rolling, () => d(100), d(100)); };
 
     const d6Res = ref(0);
-    const d6 = () => (d6Res.value = d(6));
+    const d6Rolling = ref(false);
+    const d6 = () => { void animateRoll(d6Res, d6Rolling, () => d(6), d(6), { frames: 6 }); };
 
     const reroll = (action: boolean, cd1: boolean, cd2: boolean) => {
       if (action) data.value.action.die = d(6);
@@ -308,6 +320,7 @@ export default defineComponent({
       opts,
 
       roll,
+      rolling,
       reroll,
       burn,
       burnt,
@@ -331,3 +344,4 @@ export default defineComponent({
   },
 });
 </script>
+

@@ -5,7 +5,7 @@
       <slot name="action" class="col-shrink" />
     </div>
 
-    <div v-if="rollData.result" class="col-12 text-h6">
+    <div v-if="rollData.result || progressRolling" class="col-12 text-h6" :class="{ 'dice-tumble': progressRolling }">
       <div class="row text-center items-center justify-evenly">
         <div :class="rollData.action.color">
           {{ rollData.result }}
@@ -73,6 +73,7 @@ import { useCampaign } from 'src/store/campaign';
 
 import { boxIcon, Difficulty } from 'src/lib/tracks';
 import { moveRoll, NewRollData } from 'src/lib/roll';
+import { animateRoll } from 'src/lib/dice-animation';
 import { sleep } from 'src/lib/util';
 
 import IInput from 'src/components/Widgets/IInput.vue';
@@ -171,9 +172,15 @@ export default defineComponent({
       return n;
     });
     const rollData = ref(NewRollData());
-    const conclude = () => {
-      rollData.value = moveRoll(0, 0, 0, actionScore.value);
-
+    const progressRolling = ref(false);
+    const conclude = async () => {
+      const finalResult = moveRoll(0, 0, 0, actionScore.value);
+      const randomRoll = () => {
+        const r = moveRoll(0, 0, 0, actionScore.value);
+        r.result = '';
+        return r;
+      };
+      await animateRoll(rollData, progressRolling, randomRoll, finalResult);
       campaign.appendToJournal(
         0,
         `<div class="note progressroll"><b>[Progress Roll: ${data.value.name} :${rollData.value.result} = ${rollData.value.action.score} vs ${rollData.value.challenge.die1.roll} | ${rollData.value.challenge.die2.roll}]</b></div>`
@@ -218,6 +225,7 @@ export default defineComponent({
 
       conclude,
       rollData,
+      progressRolling,
       progressRollText,
 
       showClocks,

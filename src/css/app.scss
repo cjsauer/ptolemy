@@ -185,6 +185,17 @@ body {
   border-left: 2px solid $primary;
 }
 
+// --- Dice roll animation ---
+.dice-tumble {
+  animation: tumble 0.07s ease-in-out infinite alternate;
+  opacity: 0.7;
+}
+
+@keyframes tumble {
+  0% { transform: translateY(-1px); }
+  100% { transform: translateY(1px); }
+}
+
 // --- Shared header sizing (chat + journal editor) ---
 .q-editor__content {
   h1 {
