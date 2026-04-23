@@ -9,6 +9,7 @@
         </q-toolbar-title>
 
         <q-btn v-if="config.data.saving" icon="save" flat dense disable />
+        <q-btn v-if="config.data.driveSyncing" icon="mdi-cloud-sync" flat dense disable class="drive-sync-icon" />
         <q-btn icon="mdi-dice-6" flat dense @click="showRoller = !showRoller">
           <q-tooltip>Toggle Dice Roller</q-tooltip>
         </q-btn>
@@ -726,6 +727,15 @@ export default defineComponent({
   margin-left: 10px
   margin-right: 10px
   color: rgba(200, 164, 92, 0.3)
+
+.drive-sync-icon
+  animation: pulse-opacity 1s ease-in-out infinite
+
+@keyframes pulse-opacity
+  0%, 100%
+    opacity: 0.4
+  50%
+    opacity: 1
 
 // Header branding glow
 .q-toolbar-title

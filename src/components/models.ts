@@ -65,6 +65,7 @@ export interface IConfig {
   index: IIndexItem[];
   edit: boolean;
   saving: boolean;
+  driveSyncing?: boolean;
   journalTab?: boolean;
   claudeApiKey?: string;
   claudeModel?: string;

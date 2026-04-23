@@ -22,7 +22,6 @@ export default defineComponent({
     $q.dark.set(true);
 
     const campaign = useCampaign();
-
     const config = useConfig();
 
     const initialiseData = async () => {
@@ -40,6 +39,7 @@ export default defineComponent({
 
       // Auto-sync if we have a valid token from localStorage
       if (isSignedIn()) {
+        config.data.driveSyncing = true;
         try {
           const result = await driveSync();
           if (result.updated > 0) {
@@ -55,6 +55,8 @@ export default defineComponent({
             position: 'top',
             timeout: 5000,
           });
+        } finally {
+          config.data.driveSyncing = false;
         }
       } else if (wasSignedIn()) {
         $q.notify({
@@ -88,7 +90,10 @@ export default defineComponent({
         config.data.saving = true;
         await campaign.save();
         if (isSignedIn()) {
-          pushCampaign(campaign.data).catch((err) => console.log('[Drive] Push failed:', err));
+          config.data.driveSyncing = true;
+          pushCampaign(campaign.data)
+            .catch((err) => console.log('[Drive] Push failed:', err))
+            .finally(() => { config.data.driveSyncing = false; });
         }
         await sleep(200);
         config.data.saving = false;
