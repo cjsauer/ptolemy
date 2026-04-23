@@ -127,18 +127,6 @@ Common oracle IDs:
     },
   },
   {
-    name: 'advance_clock',
-    description: 'Fill segments on a clock. Returns whether the clock is complete.',
-    input_schema: {
-      type: 'object' as const,
-      properties: {
-        clock_name: { type: 'string', description: 'Name of the clock' },
-        segments: { type: 'number', description: 'Number of segments to fill (default 1)' },
-      },
-      required: ['clock_name'],
-    },
-  },
-  {
     name: 'create_progress_track',
     description: 'Create a non-vow progress track (combat, expedition, etc.).',
     input_schema: {
@@ -420,8 +408,6 @@ async function executeTool(name: string, input: Record<string, unknown>, campaig
       return tools.rollOracle(campaign, input.oracle_id as string);
     case 'create_clock':
       return tools.createClock(campaign, input.name as string, input.segments as number, input.advance as string);
-    case 'advance_clock':
-      return tools.advanceClock(campaign, input.clock_name as string, (input.segments as number) ?? 1);
     case 'create_progress_track':
       return tools.createProgressTrack(campaign, input.name as string, input.difficulty as number, input.notes as string);
     case 'add_journal':
