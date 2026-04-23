@@ -10,6 +10,7 @@
 
     <div class="row items-center">
       <clipboard-btn :data="data.description" />
+      <send-to-companion-btn :data="'Planet description: ' + data.description" />
       <q-input class="col-grow" label="Description" v-model="data.description" autogrow dense />
       <q-btn icon="mdi-playlist-plus" flat dense @click="btns.DescText">
         <q-tooltip>Use default description text</q-tooltip>
@@ -51,9 +52,10 @@ import { NewPlanet } from 'src/lib/sector';
 import OInput from './OInput.vue';
 import OBtns from './OBtns.vue';
 import ClipboardBtn from '../Widgets/ClipboardBtn.vue';
+import SendToCompanionBtn from '../Widgets/SendToCompanionBtn.vue';
 
 export default defineComponent({
-  components: { OInput, OBtns, ClipboardBtn },
+  components: { OInput, OBtns, ClipboardBtn, SendToCompanionBtn },
   name: 'OPlanet',
   setup() {
     const data = ref(NewPlanet());

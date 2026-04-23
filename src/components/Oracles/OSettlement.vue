@@ -10,6 +10,7 @@
 
     <div class="row items-center">
       <clipboard-btn :data="data.population" />
+      <send-to-companion-btn :data="'Population: ' + data.population" />
       <q-select
         class="col-grow"
         label="Population"
@@ -47,9 +48,10 @@ import { NewSettlement } from 'src/lib/sector';
 import OInput from './OInput.vue';
 import OBtns from './OBtns.vue';
 import ClipboardBtn from '../Widgets/ClipboardBtn.vue';
+import SendToCompanionBtn from '../Widgets/SendToCompanionBtn.vue';
 
 export default defineComponent({
-  components: { OInput, OBtns, ClipboardBtn },
+  components: { OInput, OBtns, ClipboardBtn, SendToCompanionBtn },
   name: 'OSettlement',
   setup() {
     const data = ref(NewSettlement());

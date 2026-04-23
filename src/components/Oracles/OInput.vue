@@ -1,6 +1,7 @@
 <template>
   <div class="row items-center">
     <clipboard-btn :data="data" />
+    <send-to-companion-btn :data="label + ': ' + data" />
     <q-input class="col-grow" :label="label" v-model="data" dense>
       <template v-slot:append v-if="reroll">
         <span class="text-subtitle2"><q-icon name="mdi-autorenew" />1-{{ maxRerolls }}</span>
@@ -19,10 +20,11 @@
 import { defineComponent, computed } from 'vue';
 
 import ClipboardBtn from 'src/components/Widgets/ClipboardBtn.vue';
+import SendToCompanionBtn from 'src/components/Widgets/SendToCompanionBtn.vue';
 
 export default defineComponent({
   name: 'OInput',
-  components: { ClipboardBtn },
+  components: { ClipboardBtn, SendToCompanionBtn },
   props: {
     label: {
       type: String,

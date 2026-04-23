@@ -7,7 +7,12 @@
     style="border-radius: 4px"
   >
     <q-card class="card-bg">
-      <q-card-section v-html="mdToHtml(move.Text)" />
+      <q-card-section>
+        <div class="row items-center q-mb-sm">
+          <send-to-companion-btn :data="'[Move: ' + move.Name + ']'" />
+        </div>
+        <div v-html="mdToHtml(move.Text)" />
+      </q-card-section>
       <q-card-section v-if="move.Oracles" class="q-gutter-md">
         <q-btn
           v-for="(oracleID, index) in move.Oracles"
@@ -36,8 +41,10 @@ import { useCampaign } from 'src/store/campaign';
 import { mdToHtml } from 'src/lib/util';
 
 import * as oracle from 'src/lib/oracles';
+import SendToCompanionBtn from '../Widgets/SendToCompanionBtn.vue';
 
 export default defineComponent({
+  components: { SendToCompanionBtn },
   name: 'Move',
   props: {
     move: {
