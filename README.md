@@ -166,9 +166,9 @@ Modifications to the data model must be limited to optional props verified where
 
 Include comments where the intent isn't obvious.
 
-### Please don't try to implement multiplayer
+### Please go ahead and try to implement multiplayer
 
-Ptolemy is designed as a solo-play app.
+Because that would be cool.
 
 ### Customize the configuration
 
