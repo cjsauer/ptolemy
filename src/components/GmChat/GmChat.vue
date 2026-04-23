@@ -131,19 +131,14 @@
       <q-card class="card-bg" style="min-width: 320px">
         <q-card-section class="bg-secondary sf-header text-h6">Rewind</q-card-section>
         <q-card-section>
-          <template v-if="rewindSnapshotId">
-            This will restore all game state (character, sector, vows, chat) to the snapshot taken before this message. {{ messages.length - rewindTarget }} message(s) and all state changes will be reverted.
-          </template>
-          <template v-else>
-            No snapshot is available for this message (it predates the snapshot system). This will only remove {{ messages.length - rewindTarget }} message(s) without reverting game state.
-            <div class="text-warning text-caption q-mt-sm">
-              Character, vows, clocks, and sector changes will NOT be undone.
-            </div>
-          </template>
+          Remove {{ messages.length - rewindTarget }} message(s) and try again. Your message will be placed back in the input.
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat label="Cancel" @click="showRewindConfirm = false" />
-          <q-btn flat label="Rewind" color="warning" @click="confirmRewind" />
+          <q-btn flat label="Rewind chat" color="primary" @click="confirmRewind(false)" />
+          <q-btn v-if="rewindSnapshotId" flat label="Rewind chat + state" color="warning" @click="confirmRewind(true)">
+            <q-tooltip>Also restore game state (world objects, journal) from snapshot</q-tooltip>
+          </q-btn>
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -363,12 +358,12 @@ export default defineComponent({
       }
       showRewindConfirm.value = true;
     };
-    const confirmRewind = async () => {
+    const confirmRewind = async (restoreState = false) => {
       const session = currentSession.value;
       if (!session) return;
       const rewoundText = session.chat[rewindTarget.value]?.content || '';
 
-      if (rewindSnapshotId.value) {
+      if (restoreState && rewindSnapshotId.value) {
         const restored = await restoreSnapshot(rewindSnapshotId.value);
         if (restored) {
           campaign.data = restored;
