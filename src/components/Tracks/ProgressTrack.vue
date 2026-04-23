@@ -15,6 +15,7 @@
         <span> vs </span> <span :class="rollData.challenge.die1.color"> {{ rollData.challenge.die1.roll }}</span>
         <span>|</span>
         <span :class="rollData.challenge.die2.color">{{ rollData.challenge.die2.roll }}</span>
+        <send-to-companion-btn :data="progressRollText" />
         <q-btn icon="mdi-close-circle" flat dense :size="btnSize" @click="rollData.result = ''">
           <q-tooltip>Clear roll result</q-tooltip>
         </q-btn>
@@ -76,10 +77,11 @@ import { sleep } from 'src/lib/util';
 
 import IInput from 'src/components/Widgets/IInput.vue';
 import Clocks from 'src/components/Tracks/Clocks.vue';
+import SendToCompanionBtn from 'src/components/Widgets/SendToCompanionBtn.vue';
 
 export default defineComponent({
   name: 'ProgressTrack',
-  components: { IInput, Clocks },
+  components: { IInput, Clocks, SendToCompanionBtn },
   props: {
     modelValue: {
       type: Object as PropType<IProgressTrack>,
@@ -178,6 +180,12 @@ export default defineComponent({
       );
     };
 
+    const progressRollText = computed(() => {
+      if (!rollData.value.result) return '';
+      const match = rollData.value.challenge.match ? ' (MATCH)' : '';
+      return `[Progress Roll: ${data.value.name} → ${rollData.value.action.score} vs ${rollData.value.challenge.die1.roll} & ${rollData.value.challenge.die2.roll} → ${rollData.value.result}${match}]`;
+    });
+
     const campaign = useCampaign();
     const showClocks = ref(false);
     const clockIcon = computed(() => (showClocks.value ? 'mdi-clock-time-two' : 'mdi-clock-time-two-outline'));
@@ -210,6 +218,7 @@ export default defineComponent({
 
       conclude,
       rollData,
+      progressRollText,
 
       showClocks,
       clockIcon,
