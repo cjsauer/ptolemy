@@ -8,7 +8,7 @@ Named after Claudius Ptolemy — the most famous stargazer in history, and his f
 
 Ptolemy is a solo RPG companion app for Ironsworn: Starforged. It combines traditional TTRPG tools (dice roller, progress tracks, hex sector map, oracle tables, journal) with two AI systems:
 
-- **Creative Companion** — a Claude-powered chat assistant that interprets oracle results, voices NPCs, and helps build the world. The player handles all rules and dice; the companion handles creative interpretation.
+- **Creative Companion** — a Claude-powered creative partner for solo play. It aids with the imaginative side of the GM role — interpreting oracle results, voicing NPCs, building world details — while the player retains full control over rules, dice, and pacing. (Full AI rules handling remains an open design challenge; naive attempts have led to frustrating results — hallucinated move rules, incorrect math, and loss of player agency.)
 - **World Tick** — an autonomous world simulation that asks every faction, settlement, and NPC what they intend to do, cascading context from macro to local to individual.
 
 ## Install & Run
