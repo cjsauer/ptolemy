@@ -147,10 +147,6 @@ export default defineComponent({
           }
         }
         updateValue();
-        campaign.appendToJournal(
-          0,
-          `<div class="note progress"><b>[Mark Progress: ${data.value.name} :${actionScore.value} boxes]</b></div>`
-        );
       })();
     };
 
@@ -181,10 +177,6 @@ export default defineComponent({
         return r;
       };
       await animateRoll(rollData, progressRolling, randomRoll, finalResult);
-      campaign.appendToJournal(
-        0,
-        `<div class="note progressroll"><b>[Progress Roll: ${data.value.name} :${rollData.value.result} = ${rollData.value.action.score} vs ${rollData.value.challenge.die1.roll} | ${rollData.value.challenge.die2.roll}]</b></div>`
-      );
     };
 
     const progressRollText = computed(() => {

@@ -37,7 +37,6 @@ import { defineComponent, watch, computed, ref, PropType } from 'vue';
 
 import { IClock, EAtO } from '../models';
 
-import { useCampaign } from 'src/store/campaign';
 import { useConfig } from 'src/store/config';
 
 import { RollClock } from 'src/lib/tracks';
@@ -54,7 +53,6 @@ export default defineComponent({
   setup(props, { emit }) {
     const data = ref(props.modelValue);
     const config = useConfig();
-    const campaign = useCampaign();
 
     watch(
       () => props.modelValue,
@@ -66,7 +64,6 @@ export default defineComponent({
       () => {
         if (data.value.filled === data.value.segments && !data.value.complete) {
           data.value.complete = true;
-          campaign.appendToJournal(0, `<div class="note clock"><b>[Clock completed: ${data.value.name}]</b></div>`);
         }
         if (data.value.filled > data.value.segments) {
           data.value.filled = 0;
