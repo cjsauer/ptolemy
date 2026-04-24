@@ -95,7 +95,7 @@
           dark
           autogrow
           :disable="chat.thinking"
-          @keydown.enter.exact.prevent="send"
+          @keydown.enter.exact="onEnterKey"
           class="col"
           input-class="input-field"
         >
@@ -237,6 +237,7 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed, nextTick, watch, onMounted } from 'vue';
+import { useQuasar } from 'quasar';
 import { marked } from 'marked';
 import { useCampaign } from 'src/store/campaign';
 import { useConfig } from 'src/store/config';
@@ -261,6 +262,13 @@ export default defineComponent({
     const campaign = useCampaign();
     const config = useConfig();
     const chat = useChat();
+    const $q = useQuasar();
+
+    const onEnterKey = (e: KeyboardEvent) => {
+      if ($q.platform.is.mobile) return;
+      e.preventDefault();
+      void send();
+    };
 
     const messageList = ref<HTMLElement | null>(null);
     let abortController: AbortController | null = null;
@@ -526,6 +534,7 @@ export default defineComponent({
       confirmDeleteSession,
       doDeleteSession,
       send,
+      onEnterKey,
       showDebug,
       debugTab,
       debugSystemPrompt,
